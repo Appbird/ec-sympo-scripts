@@ -1,87 +1,9 @@
-from dataclasses import dataclass
-from enum import Enum
-from typing import Any, Optional, Self, TypeVar, Union
-from returns.result import Result, safe, Success, Failure
-from returns.maybe import Maybe, Some, Nothing
+from typing import Any, Union
+from returns.result import safe
 
 import re
 
-from metadata_types import SimplifiedMetadata
-from pdf_types import Figure, Paper, Section, Table
-
-T = TypeVar("T")    
-# TODO: もっと良い名前はないか？
-type ResultE[T] = Result[T, ExceptionReport]
-
-class LineStream:
-    filename:str
-    lines:list[str]
-    at:int = 0
-    def surroundings(self, r:int) -> list[str]:
-        return self.lines[(self.at - r):(self.at + 1 + r)]
-    def location(self) -> int: return self.at
-    def pop(self:Self) -> Maybe[str]:
-        self.at += 1
-        if self.at == len(self.lines):
-            return Nothing
-        else:
-            return Some(self.lines[self.at])
-    def expect(self, pattern:re.Pattern, err:str) -> ResultE[re.Match[Any]]:
-        # TODO: patternを受け取って、それに当てはまっていればpatternを返し、そうでなければExceptionReportを返す。
-        tested = self.pop()
-        matched = pattern.match(tested)
-        if matched == None: return Failure(exception_report(self, err))
-        else: return Success(matched)
-
-        
-
-    def empty(self:Self) -> bool:
-        return self.at == len(self.lines) - 1
-
-@dataclass
-class ExceptionReport:
-    current_posititon:int
-    surroundings:list[str]
-    exception:str
-
-def exception_report(lines:LineStream, err:str):
-    return ExceptionReport(
-        lines.location(),
-        lines.surroundings(3),
-        err
-    )
-
-def expect(m:Maybe[T], err:str) -> T:
-    match m:
-        case Some(x): return x
-        case Nothing: raise Exception(err)
-
-
-def parse_figure(paper:Paper, lines:LineStream) -> Figure:
-    raise NotImplementedError()
-def parse_table(paper:Paper, lines:LineStream) -> Table:
-    raise NotImplementedError()
-def parse_section(paper:Paper, lines:LineStream) -> Section:
-    raise NotImplementedError()
-def parse_section_title(paper:Paper, lines:LineStream) -> Section:
-    raise NotImplementedError()
-
-def parse_paper_title(paper:Paper, lines:LineStream) -> ResultE[Section]:
-
-
-@safe
-def parse_paper(paper:Paper, lines:LineStream) -> Paper:
-    title = parse_paper_title(paper, lines).unwrap()
-    title = parse_paper_title(paper, lines).unwrap()
-
-    
-    
-            
-
-
-        
-        
-
+from pdf_types import Paper
 
 @safe
 def clean(paper_txt:str) -> list[str]:
