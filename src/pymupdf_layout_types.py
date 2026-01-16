@@ -91,12 +91,17 @@ class PdfDocument(BaseModel):
 
 def list_span_texts(doc: PdfDocument) -> list[str]:
     texts: list[str] = []
+    classes= set()
     for page in doc.pages:
         print(f"Page {page.page_number};")
         for box in page.boxes:
             print(f"\tbox {box.boxclass}")
+            classes.add(box.boxclass)
             if box.textlines is None: continue
             for textline in box.textlines:
+                print("\t\t", end="")
                 for span in textline.spans:
-                    print(f"\t\t{span.text}")
+                    print(f"{span.text} / ", end="")
+                print("")
+    print(classes)
     return texts
