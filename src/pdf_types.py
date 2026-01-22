@@ -8,7 +8,6 @@ from util import clean_multiline_literal
 @dataclass
 class Figure:
     stringize_content:str
-    size:str
     number:int
     title:str
     etitle:Optional[str]
@@ -16,8 +15,6 @@ class Figure:
 @dataclass
 class Table:
     content:str
-    width:int
-    height:int
     number:int
     title:str
     etitle:Optional[str]
@@ -25,12 +22,14 @@ class Table:
 @dataclass
 class Paragraph:
     content:str
+    list_items:list[str]
+    is_enumrated:bool
 
 @dataclass
 class Section:
     number:str
     part_name:str
-    paragraphs_below:list[str]
+    paragraphs_below:list[Paragraph]
 
 
 @dataclass
@@ -45,8 +44,8 @@ class Paper:
     abstract:str
     keywords:list[str]
     sections:list[Section]
-    tables:list[Figure]
-    figures:list[Table]
+    figures:list[Figure]
+    tables:list[Table]
     footnotes:list[Footnote]
 
     def __str__(self):
