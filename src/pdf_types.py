@@ -40,6 +40,11 @@ class Footnote:
     content:str
 
 @dataclass
+class Reference:
+    sign:str
+    content:str
+
+@dataclass
 class Paper:
     # metadata:SimplifiedMetadata
     title:str
@@ -49,9 +54,10 @@ class Paper:
     figures:list[Figure]
     tables:list[Table]
     footnotes:list[Footnote]
+    references:list[Reference]
 
     def decode_json(self, out:Path):
-        out.write_text(json.dumps(dataclasses.asdict(self), ensure_ascii=False))
+        out.write_text(json.dumps(dataclasses.asdict(self), ensure_ascii=False, indent=4))
 
     def __str__(self):
         return clean_multiline_literal(f"""

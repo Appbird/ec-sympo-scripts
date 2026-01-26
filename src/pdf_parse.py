@@ -11,7 +11,7 @@ from returns.maybe import Maybe, Some, Nothing
 import re
 
 from pdf2text import pdf2json
-from pdf_types import Figure, Footnote, Paper, Paragraph, Section, Table
+from pdf_types import Figure, Footnote, Paper, Paragraph, Reference, Section, Table
 from pymupdf_layout_types import PdfDocument
 from util import clean_multiline_literal
 
@@ -48,7 +48,7 @@ class Token:
     type:TokenType
     content:str
     lines:list[str]
-    spans:list[str]
+    line_x0:list[int]
     def __str__(self):
         return f"{self.type}, {self.content}"
     
@@ -61,16 +61,15 @@ def doc_to_tokens(doc:PdfDocument):
             if box.textlines is None: continue
             content = ""
             lines:list[str] = []
-            spans:list[str] = []
+            lines_x0:list[int] = []
             for textline in box.textlines:
                 line = ""
                 for span in textline.spans:
                     line += span.text
-                    spans.append(span.text)
                 content += line
-                spans.append("\n")
                 lines.append(line)
-            tokens.append(Token(tokentype, content, lines, spans))
+                lines_x0.append(int(textline.bbox[0]))
+            tokens.append(Token(tokentype, content, lines, lines_x0))
     return tokens
 
 def dump_token(tokens:list[Token]) -> str:
@@ -79,7 +78,7 @@ def dump_token(tokens:list[Token]) -> str:
     for token in tokens:
         if head_of_box:
             dumped += f"[box {token.type}]\n"
-            for line in token.spans:
+            for line in token.lines:
                 dumped += f"\t{line}\n"
     return dumped
         
@@ -182,13 +181,12 @@ def split_list_items(lines:list[str]) -> list[str]:
     list_itemのcontentに複数の箇条書きが含まれてしまっている場合に、
     箇条書きごとにcontentを分割する
     """
-    list_items:list[str] = [""]
+    list_items:list[str] = []
     for line in lines:
         if len(line) == 0: continue
-        if re.match(r"(\(|（|\[|\*)", line) != None:
-            list_items.append("")
+        if re.match(r"(\(|（|\[|\*)[0-9a-zA-Z]{0,3}(\)|）|\])(.{3,})", line) != None or len(list_items) == 0: list_items.append("")
         list_items[-1] += line
-    return list_items        
+    return list_items
 
 
 
@@ -211,12 +209,12 @@ def parse_list_item(paper:Paper, tokens:TokenStream) -> None:
 @safe(exceptions=(ExceptionReport,))
 def extract_caption_from_stringize_content(figure:Figure, tokens:TokenStream):
     start_idx = figure.stringize_content.rfind("図")
-    if start_idx == -1: raise exception_report(tokens, "図・表のキャプションが指定された形式に則っていません。")
+    if start_idx == -1: raise exception_report(tokens, "画像のトークンの中に図のキャプションが入っていません")
     return figure.stringize_content[start_idx:]
 
 @safe(exceptions=(ExceptionReport,))
 def split_caption_number_title(caption:str, tokens:TokenStream):
-    matched = re.match(r"(図|表)(?P<number>[0-9]+)\s*(?P<title>.+)", caption)
+    matched = re.match(r"(図|表)(?P<number>[0-9]+)\s*(?P<title>.+)$", caption)
     if matched == None: raise exception_report(tokens, "図・表のキャプションが指定された形式に則っていません。")
     number = matched["number"]
     title = matched["title"]
@@ -255,49 +253,71 @@ def parse_table(paper:Paper, tokens:TokenStream) -> None:
 
 @safe(exceptions=(ExceptionReport,UnwrapFailedError))
 def parse_footnote(paper:Paper, tokens:TokenStream) -> None:
-    footnote = tokens.pop("脚注").unwrap().content
-    assert isinstance(footnote, str)
-    matching = re.match(r">\s*(?P<sign>[_*\[\]a-zA-Z0-9()]+)\s+(?P<content>.+)", footnote)
-    if matching != None:
-        sign = matching["sign"]
-        content = matching["content"]
-        assert isinstance(sign, str) and isinstance(content, str)
-        paper.footnotes.append(Footnote(sign, content))
-    else:
-        paper.footnotes.append(Footnote("", footnote))
+    footnote = tokens.pop("脚注").unwrap()
+    items = split_list_items(footnote.lines)
+    for item in items:
+        matching = re.match(r"\s*(?P<sign>(_|\*){1,2}|(\[|\()[a-zA-Z0-9]{1,2}(\]|\)))\s*(?P<content>.+)$", item)
+        if matching != None:
+            sign = matching["sign"]
+            content = matching["content"]
+            assert isinstance(sign, str) and isinstance(content, str)
+            paper.footnotes.append(Footnote(sign, content))
+        else:
+            paper.footnotes.append(Footnote("", item))
+
+def parse_header_line(string:str) -> Section:
+    header_pattern = r"(?P<number>([0-9]{1,2}\.)*[0-9]{1,2}\.?)\s*(?P<title>.+)$"
+    header_match = re.match(header_pattern, string)
+    if header_match is None: return Section("", string, [])
     
+    number = header_match["number"]
+    part_name = header_match["title"]
+    assert isinstance(number, str) and isinstance(part_name, str)
+    return Section(number, part_name, [])
 
 @safe(exceptions=(ExceptionReport,UnwrapFailedError))
 def parse_section_header(paper:Paper, tokens:TokenStream) -> None:
     header = tokens.pop("節タイトル").unwrap().content
     assert isinstance(header, str)
-    header = header.replace("**", "")
-    section = Section("", "", [])
+    paper.sections.append(parse_header_line(header))
     
 
-    header_pattern = r"(?P<number>([0-9]{1,2}.)+)\s*(?P<title>.+)"
-    header_match = re.match(header_pattern, header)
-    if header_match is None:
-        section.number = ""
-        section.part_name = header
-        paper.sections.append(section)
-        return 
-    
-    title = header_match["number"]
-    section_name = header_match["title"]
-    assert isinstance(title, str) and isinstance(section_name, str)
-    
-    section.number = title
-    section.part_name = section_name
-    paper.sections.append(section)
+def is_new_paragraph(paragraph:Token):
+    return len(paragraph.line_x0) == 1 or len(set(paragraph.line_x0)) > 1
+@safe(exceptions=(ExceptionReport,))
+def last_non_list_paragraph(section:Section, tokens:TokenStream) -> Paragraph:
+    idx = len(section.paragraphs_below) - 1
+    while section.paragraphs_below[idx].is_enumrated:
+        idx -= 1
+        if idx < 0: raise exception_report(tokens, "箇条書きでないパラグラフがこれより前に見つかりませんでした。")
+    return section.paragraphs_below[idx]
+
+def should_insert_another_section(token:Token):
+    matched = 
+    if matched == None: return False
+    token.lines = token.lines[0:-1]
 
 @safe(exceptions=(ExceptionReport,UnwrapFailedError))
 def parse_main_text(paper:Paper, tokens:TokenStream) -> None:
     assert len(paper.sections) > 0, "セクションがまだ一つも追加されていません。セクションを追加してください。"
     last_section = paper.sections[-1]
     popped = tokens.pop("本文").unwrap()
-    paragraph = Paragraph(popped.content, [], False)
-    last_section.paragraphs_below.append(paragraph)
+    if is_new_paragraph(popped):
+        last_paragraph = Paragraph("", [], False)
+        last_section.paragraphs_below.append(last_paragraph)
+    else:
+        last_paragraph = last_non_list_paragraph(last_section, tokens).unwrap()
+    last_paragraph.content += popped.content
+    for (idx, line) in enumerate(popped.lines):
+        last_paragraph.content += line
+        # 誤って別のセクションの説明が入り込んでしまっている時
+        if re.match(r"[0-9]\.[0-9]\.", line) != None:
+            if 
+            last_section = parse_header_line(line)
+            paper.sections.append(last_section)
+
+
+    
 
 
 @safe(exceptions=(ExceptionReport,UnwrapFailedError))
@@ -308,9 +328,9 @@ def parse_abstract(paper:Paper, tokens:TokenStream):
 
 @safe(exceptions=(ExceptionReport,UnwrapFailedError))
 def parse_keywords(paper:Paper, tokens:TokenStream):
-    keywords= tokens.expect_pattern("キーワード", patterns=r"キーワード\s*(:|：)\s*(.+)").unwrap()[2]
+    keywords= tokens.expect_pattern("キーワード", patterns=r"キーワード\s*(:|：)\s*(.+)$").unwrap()[2]
     assert isinstance(keywords, str)
-    keywords = re.split(r"，", keywords[0])
+    keywords = re.split(r"，", keywords)
     for keyword in keywords: assert isinstance(keyword, str)
     paper.keywords = keywords
 
@@ -322,16 +342,41 @@ def parse_paper_head(paper:Paper, tokens:TokenStream) -> None:
     tokens.expect("著者群").unwrap()
     parse_abstract(paper, tokens).unwrap()
     parse_keywords(paper, tokens).unwrap()
-    
-    
+
+@safe(exceptions=(ExceptionReport,UnwrapFailedError))
+def parse_references(paper: Paper, tokens:TokenStream) -> None:
+    tokens.expect("参考文献", {TokenType.SECTION_HEADER}).unwrap()
+    while not tokens.empty():
+        next = tokens.next().unwrap()
+        if next.type in {TokenType.LIST_ITEM, TokenType.TEXT}:
+            popped = tokens.pop("参考文献リスト").unwrap()
+            for line in popped.lines:
+                matched = re.match(r"(\[|［)(?P<number>[0-9]{1,4})(\]|］)(?P<content>.+)", line)
+                if matched == None:
+                    paper.references[-1].content += line
+                else:
+                    assert isinstance(matched["number"], str) and isinstance(matched["content"], str)
+                    paper.references.append(Reference(matched["number"], matched["content"]))
+        elif next.type == TokenType.SECTION_HEADER:
+            return
+        else:
+            tokens.pop("読み捨て").unwrap()
+            continue
+
+
+def is_actually_footnote(token:Token):
+    return re.match(r"\*\[", token.content) != None
+
+def is_actually_section_header(token:Token):
+    return re.match(r"[0-9]{1,2}\.([0-9]{1,2})?\.?", token.content) != None
 
 @safe(exceptions=(ExceptionReport,UnwrapFailedError))
 def parse_paper(paper:Paper, tokens:TokenStream) -> None:
     tokens.expect("ページヘッダ", tokentypes={TokenType.PAGE_HEADER}).unwrap()
     parse_paper_head(paper, tokens).unwrap()
     while not tokens.empty():
-        token = tokens.next().unwrap()
-        match token.type:
+        next_token = tokens.next().unwrap()
+        match next_token.type:
             case TokenType.PAGE_HEADER:
                 tokens.expect("ページヘッダ", {TokenType.PAGE_HEADER}).unwrap()
                 continue
@@ -339,10 +384,19 @@ def parse_paper(paper:Paper, tokens:TokenStream) -> None:
                 tokens.expect("ページフッタ", {TokenType.PAGE_FOOTER}).unwrap()
                 continue
             case TokenType.SECTION_HEADER:
-                parse_section_header(paper, tokens).unwrap()
+                if next_token.content != "参考文献":
+                    parse_section_header(paper, tokens).unwrap()
+                else:
+                    parse_references(paper, tokens).unwrap()
                 continue
             case TokenType.TEXT:
-                parse_main_text(paper, tokens).unwrap()
+                # SECTION_HEADER, FOOTNOTEが誤ってこれと判別されているケースがあるのでその対処
+                if is_actually_footnote(next_token):
+                    parse_footnote(paper, tokens).unwrap()
+                elif is_actually_section_header(next_token):
+                    parse_section_header(paper, tokens).unwrap()
+                else:
+                    parse_main_text(paper, tokens).unwrap()
                 continue
             case TokenType.FOOTNOTE:
                 parse_footnote(paper, tokens).unwrap()
@@ -352,17 +406,20 @@ def parse_paper(paper:Paper, tokens:TokenStream) -> None:
             case TokenType.TABLE:
                 parse_table(paper, tokens).unwrap()
             case TokenType.LIST_ITEM:
-                parse_list_item(paper, tokens).unwrap()
+                if is_actually_footnote(next_token):
+                    parse_footnote(paper, tokens).unwrap()
+                else:
+                    parse_list_item(paper, tokens).unwrap()
             case _:
-                assert 0, token.type
+                assert 0, next_token.type
     return 
     
-    
+
     
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-    paper = Paper("", "", [], [], [], [], [])
+    paper = Paper("", "", [], [], [], [], [], [])
     testfile = Path("pdf/EC2025/data/recid_2003647/IPSJ-EC2025001.pdf")
     ts = TokenStream(testfile)
     parse_paper(paper, ts).unwrap()
