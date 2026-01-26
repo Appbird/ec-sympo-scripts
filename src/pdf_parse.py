@@ -3,7 +3,7 @@ from enum import Enum
 from logging import info
 import logging
 from pathlib import Path
-from typing import Any, Self, TypeVar
+from typing import Self, TypeVar
 from returns.result import safe, ResultE, Success, Failure
 from returns.primitives.exceptions import UnwrapFailedError
 from returns.maybe import Maybe, Some, Nothing
@@ -123,11 +123,6 @@ class TokenStream:
             return Some(self.tokens[self.at])
         else:
             return Nothing
-    def is_next(self:Self, tokentypes:TokenType) -> bool:
-        if self.at + 1 != len(self.tokens):
-            return self.tokens[self.at + 1].type == tokentypes
-        else:
-            return False
     
     def expect(self, what_expect:str, tokentypes:set[TokenType] = set()) -> ResultE[Token]:
         popped = self.pop(what_expect)
@@ -139,13 +134,9 @@ class TokenStream:
         return Success(popped)
 
     def expect_pattern(self, what_expect:str, patterns:str, tokentypes:set[TokenType] = set()) -> ResultE[re.Match]:
-        popped = self.pop(what_expect)
-        if popped is Nothing:
-            return Failure(exception_report(self, f"`{what_expect}として{tokentypes}`にマッチする行が来るはずなのに、切れてしまったね。"))
-        popped = popped.unwrap()
-        if len(tokentypes) != 0 and popped.type not in tokentypes:
-            return Failure(exception_report(self, f"`{what_expect}として{tokentypes}`にマッチする行が来るはずなのに、トークン`{popped}`が来てしもうたね。"))
-        content = popped.content
+        popped = self.expect(what_expect, tokentypes)
+        if isinstance(popped, Failure): return popped
+        content = popped.unwrap().content
         matching = re.match(patterns, content)
         if matching == None:  return Failure(exception_report(self, f"`{what_expect}として{patterns}`にマッチする行が来るはずなのに、実際には`{content}`が来たね"))
         return Success(matching)
@@ -184,19 +175,53 @@ def exception_report(lines:TokenStream, err:str):
         err
     )
 
+
+
+def split_list_items(lines:list[str]) -> list[str]:
+    """
+    list_itemのcontentに複数の箇条書きが含まれてしまっている場合に、
+    箇条書きごとにcontentを分割する
+    """
+    list_items:list[str] = [""]
+    for line in lines:
+        if len(line) == 0: continue
+        if re.match(r"(\(|（|\[|\*)", line) != None:
+            list_items.append("")
+        list_items[-1] += line
+    return list_items        
+
+
+
 @safe(exceptions=(ExceptionReport,UnwrapFailedError))
 def parse_list_item(paper:Paper, tokens:TokenStream) -> None:
-    # FIXME: 一つのアイテムに二つ以上入っている場合があるので注意する
     assert len(paper.sections) > 0, "セクションがまだ一つも追加されていません。セクションを追加してください。"
+    
     paragraphs = paper.sections[-1].paragraphs_below
     # 一度もまだ段落が構成されていないか、前の段落が段落ではなかった場合には新しく箇条書きの段落を作る
     if len(paragraphs) == 0 or not paragraphs[-1].is_enumrated:
         paragraphs.append(Paragraph("", [], True))
+    
     last_paragraph = paragraphs[-1]
     while not tokens.empty() and tokens.next().unwrap().type == TokenType.LIST_ITEM:
-        list_item = tokens.expect("リスト", tokentypes={TokenType.LIST_ITEM}).unwrap()
-        last_paragraph.content += list_item.content
-        last_paragraph.list_items.append(list_item.content)
+        list_item_raw = tokens.expect("リスト", tokentypes={TokenType.LIST_ITEM}).unwrap()
+        last_paragraph.content += list_item_raw.content
+        for item in split_list_items(list_item_raw.lines):
+            last_paragraph.list_items.append(item)
+
+@safe(exceptions=(ExceptionReport,))
+def extract_caption_from_stringize_content(figure:Figure, tokens:TokenStream):
+    start_idx = figure.stringize_content.rfind("図")
+    if start_idx == -1: raise exception_report(tokens, "図・表のキャプションが指定された形式に則っていません。")
+    return figure.stringize_content[start_idx:]
+
+@safe(exceptions=(ExceptionReport,))
+def split_caption_number_title(caption:str, tokens:TokenStream):
+    matched = re.match(r"(図|表)(?P<number>[0-9]+)\s*(?P<title>.+)", caption)
+    if matched == None: raise exception_report(tokens, "図・表のキャプションが指定された形式に則っていません。")
+    number = matched["number"]
+    title = matched["title"]
+    assert isinstance(number, str) and isinstance(title, str)
+    return (int(number), title)
 
 @safe(exceptions=(ExceptionReport,UnwrapFailedError))
 def parse_figure(paper:Paper, tokens:TokenStream) -> None:
@@ -204,14 +229,19 @@ def parse_figure(paper:Paper, tokens:TokenStream) -> None:
     while not tokens.empty() and tokens.next().unwrap().type == TokenType.PICTURE:
         figure.stringize_content += tokens.pop("図の内容").unwrap().content
     
-    caption_token = tokens.next().unwrap()
-    # TODO: 図の内容の方にキャプションが混じってしまっている場合があるので、それを拾う。
-    correct_type= caption_token.type in {TokenType.CAPTION, TokenType.LIST_ITEM, TokenType.TEXT}
-    is_caption_title = caption_token.content.startswith("図")
-    if correct_type and is_caption_title:
-        tokens.pop("キャプション")
-        figure.number = int(caption_token.spans[1])
-        figure.title = "".join(caption_token.spans[2:])
+    caption = ""
+    if tokens.empty(): 
+        caption = extract_caption_from_stringize_content(figure, tokens).unwrap()
+    else:
+        caption_token = tokens.next().unwrap()
+        correct_type= caption_token.type in {TokenType.CAPTION, TokenType.LIST_ITEM, TokenType.TEXT}
+        is_caption_title = caption_token.content.startswith("図")
+        if correct_type and is_caption_title:
+            token= tokens.pop("キャプション").unwrap()
+            caption = token.content
+        else:
+            caption = extract_caption_from_stringize_content(figure, tokens).unwrap()
+    (figure.number, figure.title) = split_caption_number_title(caption, tokens).unwrap()
     paper.figures.append(figure)
         
 
@@ -242,16 +272,21 @@ def parse_section_header(paper:Paper, tokens:TokenStream) -> None:
     header = tokens.pop("節タイトル").unwrap().content
     assert isinstance(header, str)
     header = header.replace("**", "")
+    section = Section("", "", [])
+    
 
     header_pattern = r"(?P<number>([0-9]{1,2}.)+)\s*(?P<title>.+)"
     header_match = re.match(header_pattern, header)
-    if header_match is None: raise exception_report(tokens, f"ヘッダの並びは{header_pattern}になるべきだけど、`{header}`だったね。")
+    if header_match is None:
+        section.number = ""
+        section.part_name = header
+        paper.sections.append(section)
+        return 
     
     title = header_match["number"]
     section_name = header_match["title"]
     assert isinstance(title, str) and isinstance(section_name, str)
     
-    section = Section("", "", [])
     section.number = title
     section.part_name = section_name
     paper.sections.append(section)
@@ -269,7 +304,7 @@ def parse_main_text(paper:Paper, tokens:TokenStream) -> None:
 def parse_abstract(paper:Paper, tokens:TokenStream):
     abstract= tokens.expect_pattern("概要", patterns=r"概要\s*(:|：)\s*(.+)").unwrap()[2]
     assert isinstance(abstract, str)
-    paper.abstract = abstract[0]
+    paper.abstract = abstract
 
 @safe(exceptions=(ExceptionReport,UnwrapFailedError))
 def parse_keywords(paper:Paper, tokens:TokenStream):
@@ -331,5 +366,5 @@ if __name__ == "__main__":
     testfile = Path("pdf/EC2025/data/recid_2003647/IPSJ-EC2025001.pdf")
     ts = TokenStream(testfile)
     parse_paper(paper, ts).unwrap()
-    print(paper)
+    paper.decode_json(Path("out.json"))
     exit(0)

@@ -1,0 +1,560 @@
+{
+    "title": "漫才カラオケ：未経験者でも漫才を演じることを可能にする漫才実演支援システム",
+    "abstract": "漫才には鑑賞だけでなく，実演して笑いを取る楽しさもあるが，人が漫才を演じることは難しい．本研究では，漫才のネタの台詞や演じ方（間・抑揚・動作など）をカラオケのように視覚的に提示して，2 人組の漫才実演をリアルタイムに支援する漫才カラオケを提案する．これにより，ユーザは楽しく漫才を演じられ，聴衆もその漫才を見て楽しめる体験の創出を目指す．プロトタイピングとユーザスタディを通じて，ユーザが負担なく楽しみながら，聴衆にとっても楽しめる漫才を実演できるインタフェースを開発した．",
+    "keywords": ["パ"],
+    "sections": [
+        {
+            "number": "1.",
+            "part_name": "はじめに",
+            "paragraphs_below": [
+                {
+                    "content": "漫才とは，2 人の演者が言葉や動作を通じて滑稽な掛け合いを交わし，聴衆を笑わせることを目的とした演芸である[1], [2]. 2 人の演者の役割は，おかしみや突飛さを含む発言をする“ボケ” と，ボケの発言の面白さを際立たせ，観客の笑いを誘うように訂正や説明を加える“ツッコミ” に一般的に分けられる．漫才の中にも様々なスタイルが存在するが，基本的には2 人の演者がスタンドマイクの前で動きを交えながら掛け合いを行う（図1(b) 参照）．漫才の掛け合いの例としては，ボケ役が「私の寿司なお好きはマグロです」と寿司と好きを言い間違え，それに対してツッコミが「好きなお寿司だろ」と訂正して観客の笑いを誘う，といったものがある．日本で漫才は人気を集めているが，漫才のように2 人の演者が滑稽な掛け合いを演じて観客を笑わせるスタイルのエンタテインメントは，欧米のダブルアクト[3] や中国の相声[4] など，世界各地でも人気を博している．",
+                    "list_items": [],
+                    "is_enumrated": false
+                },
+                {
+                    "content": "現代の日本における漫才の一般的な楽しみ方は漫才を鑑賞することであるが，近年では漫才を演じることにも注目が集まっている．例えば，日本一の漫才師を決めると謳うM-1 グランプリの参加者数は年々増加しており，2024年には9,550 組に達した[*1]．また，コミュニケーション能力向上を目的とした新人研修プログラムへの漫才の導",
+                    "list_items": [],
+                    "is_enumrated": false
+                },
+                {
+                    "content": "入[*2][,][*3]や，児童を対象とした学校での漫才教室[5] などが開催されている．漫才の実演を通じて，表現力の向上や対話のリズムや間の取り方といったコミュニケーション能力の習得が期待され[6]，また漫才教室では，学校を楽しく感じて授業中に積極的に発言できると感じる生徒が増加するといった効果が報告されている[5]．",
+                    "list_items": [],
+                    "is_enumrated": false
+                },
+                {
+                    "content": "さらに，複数のプロの芸人は聴衆から笑いを取ることは快感であると述べており，漫才を演じて聴衆を笑わせることは，演者に快感をもたらし笑いを共有する喜びを提供すると考える[7], [8], [9], [10]．このような体験は日常的になかなか得られないものであり，漫才を演じることで味わえる特別な体験だと考える．",
+                    "list_items": [],
+                    "is_enumrated": false
+                },
+                {
+                    "content": "しかし，人が漫才を演じて，ましてや聴衆を笑わせることは困難である．まず漫才を演じるためには，台詞や付随する身体動作を滞りなく行えるようネタを暗記する必要がある．さらに漫才を演じて聴衆を笑わせるには，掛け合いにおける台詞の抑揚や適切な間の取り方など，笑いを引き出すための表現技術が求められる．また，演じる以前に聴衆の笑いを取れる漫才のネタを創ることも難しい．これらの障壁により，漫才の実演は人にとって容易ではない．",
+                    "list_items": [],
+                    "is_enumrated": false
+                },
+                {
+                    "content": "そこで本研究では，未経験者でも既存の漫才を演じることを可能にし，聴衆の笑いを生むことができる漫才実演支援システム「漫才カラオケ」の実現を目指す．漫才カラオケは，画面インタフェース上に既存の漫才のネタとその演じ方を提示し，ボケ役とツッコミ役の2 人のユーザが提示",
+                    "list_items": [],
+                    "is_enumrated": false
+                },
+                {
+                    "content": "された通りに（すなわち画面上に歌詞を提示して人が歌うことを可能にするカラオケのように）リアルタイムに発話・動作を行うことで，漫才を演じることを可能にするものである．図1(a) は第5 章で実装したインタフェースを示しており，ネタの台詞，抑揚，感情表現，動作と，それらのタイミングを楽譜のように提示する．これにより，ユーザは事前にネタを暗記していなくても，観客から笑いを引き出すことができる表現で漫才を演じることが可能になる．さらに，プロの漫才師が創作したネタを利用できる場合，ネタそのものの面白さも保証できると考える．尚，本稿での漫才未経験者とは，普段漫才を演じる機会がなく，その経験がほとんどない人とした．",
+                    "list_items": [],
+                    "is_enumrated": false
+                },
+                {
+                    "content": "漫才カラオケの実現により，人が漫才を演じることの障壁を下げ，漫才実演による効果を体験する機会を創出しやすくなると考える．本システムの利用シーンとして，研修や学校での漫才を用いた学習プログラムが挙げられる．本システムを導入すれば，学習効果を得るための漫才実演を行いやすくなると考える．別の利用シーンとしては，お笑い芸人養成所[*4][,][*5][,][*6]など，プロの漫才師を目指す人の練習に利用できるだろう．本システムを用いた実演を通じて，ユーザは抑揚や間の取り方などを学ぶことで，漫才実演のスキル向上が期待できる．",
+                    "list_items": [],
+                    "is_enumrated": false
+                },
+                {
+                    "content": "加えて，漫才カラオケを複数人グループ向けのレクリエーションとして利用することで，漫才実演ならではの体験を提供する新しいエンタテインメントを創出できる可能性がある．日本のカラオケでは複数人で代わる代わる歌って楽しむシーンがあるが，漫才カラオケも同様に，複数人で漫才を互いに演じ，鑑賞して楽しむことができるだろう．このような利用シーンでは，ユーザは人前に立って漫才を演じて，聴衆から笑いを取る快感を得るという日常的に得",
+                    "list_items": [],
+                    "is_enumrated": false
+                },
+                {
+                    "content": "難い体験が可能になると考える．さらに，グループ内で笑いを共有することで，人間関係の構築を促進する可能性も考えられる[11]．",
+                    "list_items": [],
+                    "is_enumrated": false
+                },
+                {
+                    "content": "本稿では漫才カラオケのコンセプトを提案し，プロトタイプの実装とユーザスタディを通じてその実現可能性を示し，インタフェースデザインのための知見を得ることを目的とする．世界各地には様々なスタイルのお笑いが存在するが，一般のユーザが聴衆から笑いを引き出す快感を体験することを支援するシステムはこれまでにない．本研究の貢献は，2 人組の漫才実演をリアルタイムに支援するシステムを提案し，そのようなシステムのデザイン指針を提供することである．尚，本稿の初期検討の結果については[12]で報告している．",
+                    "list_items": [],
+                    "is_enumrated": false
+                }
+            ]
+        },
+        {
+            "number": "2.",
+            "part_name": "関連研究",
+            "paragraphs_below": [
+                {
+                    "content": "漫才に関する研究は，漫才の分析と漫才ネタの自動生成を目指すものが主に行われてきた．漫才の分析については，笑いを生む要素の分析[2], [13] だけでなく，間や動作といった非言語的側面[14], [15] などが研究されている．ネタの自動生成に関しては，漫才ネタを生成するシステム[16] の開発を目指して，Web ニュースや料理レシピなどの情報源からネタを自動生成するシステムの研究が行われてきた[17], [18]．",
+                    "list_items": [],
+                    "is_enumrated": false
+                },
+                {
+                    "content": "漫才研究の文脈において，本研究は漫才の実演をリアルタイムに支援するシステムの開発として位置づけられる．我々の知る限り直接的な先行研究は存在しないが，関連するシステムとして，ユーザがVR 空間で漫才実演を擬似体験できるシステムが開発されている[19]．このシステムでは，一人のユーザがツッコミ役となり，表示される台詞に従うことで，ボケ役を演じる自律アバターと漫才を行うことができる．しかしながら，このシステムは2 人のユーザ間の掛け合いを支援することや，漫才実演を通じて聴衆を楽しませることを目的としておらず，本研究とは目的が異",
+                    "list_items": [],
+                    "is_enumrated": false
+                },
+                {
+                    "content": "なる．加えて，このシステムはユーザにネタの台詞を提示するものの，抑揚や動作および発話や動作のタイミングといった非言語情報は提示しておらず，間の取り方や動作の難しさが課題として指摘されていた．このことから，我々の研究で取り組む非言語情報の提示は，漫才実演の支援において重要だと考えられる．",
+                    "list_items": [],
+                    "is_enumrated": false
+                },
+                {
+                    "content": "また，漫才実演を体験できるアプリケーションとしては，研究以外の事例も2 つ存在する．例えば「カラネタ」[20]は，プロが漫才を演じる映像に，カラオケのような発話に合わせて色が変化するテロップを重畳したものである．映像中のツッコミまたはボケ役一方の音声が再生され，ユーザは提示に従っていずれかの役割を疑似体験できる．また「つっこみ養成ギプスナイス★ツッコミ」[21] は，ボケ役の人形と漫才を演じるアーケードゲームであり，人はツッコミ役の疑似体験ができるものである．これらの事例は，人に漫才実演の体験を提供する点で本研究と類似するが，ネタの演じ方の情報提示は限定的であり，2人組での漫才実演支援は目的としていない点で本研究とは異なる．以上から，漫才の実演を支援するアイデア自体は過去に存在するものの，本研究は既存の漫才ネタの台詞と非言語情報の双方を提示することで，2人のユーザが聴衆を楽しませられるクオリティで漫才を演じることを可能にするシステムの実現を目指す点で新規性がある．",
+                    "list_items": [],
+                    "is_enumrated": false
+                },
+                {
+                    "content": "本研究は，リアルタイムパフォーマンス支援システムの研究としても位置づけることができる．リアルタイムに人のパフォーマンスを支援するデバイスとしては，演者に台詞を提示するスピーチプロンプタが存在する．非言語情報をリアルタイムに提示することを目指した研究では，プレゼン中の話速や声の高さ[22]，声量や目線[23]，司会者の間の取り方[24]，演劇における動作[25]の支援を目指したシステムが開発されてきた．しかし，これらはすべて一人の演者を対象としており，2人の演者間の掛け合いを支援する方法は確立されていない．",
+                    "list_items": [],
+                    "is_enumrated": false
+                },
+                {
+                    "content": "さらに，本研究における提示通りに人がパフォーマンスを行う点は，リズムゲームにおけるリアルタイムな動作情報提示とも関連する．例えば，ダンスダンスレボリューションは，リアルタイムに動作情報を提示することで，ユーザのダンスパフォーマンスを可能にしている[26],[27]．ただしこの例は身体動作に焦点を当てており，我々のシステムは発話もパフォーマンスに含む点で異なる．現状，台詞だけでなく非言語情報も提示し，2人のユーザによる漫才実演のリアルタイム支援を目指した研究は他に確認できていない．",
+                    "list_items": [],
+                    "is_enumrated": false
+                }
+            ]
+        },
+        {
+            "number": "3.",
+            "part_name": "研究アプローチ",
+            "paragraphs_below": [
+                {
+                    "content": "漫才カラオケは，漫才のネタとその演じ方を提示することで，2人のユーザの漫才実演を支援する．本稿での，漫才カラオケの要件は，「ユーザが負担なく漫才を楽しめ",
+                    "list_items": [],
+                    "is_enumrated": false
+                },
+                {
+                    "content": "ること」と「聴衆がその漫才を面白いと感じること」とした．しかし，漫才実演に関連するどのような要素を，インタフェース上でどのように提示すべきかは不明である．例えば，台詞や抑揚の情報は少なくとも必要だと予想できるものの，漫才の独特な台詞の抑揚を直感的に理解しやすくユーザに提示する方法は明らかではない．また，身体動作といった非言語情報の提示も有用である可能性はあるが，すべての非言語情報を提示することはユーザの認知負荷を増大させ，円滑な実演を妨げる可能性がある．したがって，漫才カラオケを実現するためには，上記の要件を満たすインタフェースデザインを明らかにすることが必要である．",
+                    "list_items": [],
+                    "is_enumrated": false
+                },
+                {
+                    "content": "本論文の目的は，ユーザの漫才実演をリアルタイムに支援し，聴衆がそれを見て楽しむという漫才カラオケのコンセプトの実現可能性を検証し，前述の要件を満たすインタフェースを開発することである．これを達成するために，我々は以下の2 段階のプロトタイプ実装とユーザスタディを実施した．",
+                    "list_items": [],
+                    "is_enumrated": false
+                },
+                {
+                    "content": "( 1 ) 最小限の提示要素をもつ第1 プロトタイプの実装と，漫才カラオケというコンセプトの実現可能性を検証し，漫才実演の支援に適したインタフェースデザインを調査するためのユーザスタディの実施（第4 章）．( 2 ) ステップ1 で得られた知見に基づく第2 プロトタイプの実装と，改良されたインタフェースが要件を満たすかどうかを検証するためのユーザスタディの実施（第5 章）．",
+                    "list_items": [
+                        "",
+                        "( 1 ) 最小限の提示要素をもつ第1 プロトタイプの実装と，漫才カラオケというコンセプトの実現可能性を検証し，漫才実演の支援に適したインタフェースデザインを調査するためのユーザスタディの実施（第4 章）．",
+                        "",
+                        "( 2 ) ステップ1 で得られた知見に基づく第2 プロトタイプの実装と，改良されたインタフェースが要件を満たすかどうかを検証するためのユーザスタディの実施",
+                        "（第5 章）．"
+                    ],
+                    "is_enumrated": true
+                },
+                {
+                    "content": "漫才カラオケには，ユーザがよく知っているネタを演じる場合と，知らないネタを演じる場合の，2 パターンの使用場面があり得る．後者の場合，ユーザはインタフェースの提示に従って初見の漫才ネタを演じる．このパターンはゲームのような面白さをもつ可能性がある一方で，前者のパターンと比較して演者により高い認知負荷がかかるため，より直感的なインタフェースデザインが必要となると考えられる．どちらの利用場面を指向するかによって適切な設計方法が異なる可能性はあるが，本論文では，まず利用場面を限定せずに漫才カラオケのプロトタイプを実装し，その実現可能性を確認し，ユーザスタディを通じたデザイン指針の獲得を目指した．",
+                    "list_items": [],
+                    "is_enumrated": false
+                }
+            ]
+        },
+        {
+            "number": "4.",
+            "part_name": "第1 プロトタイプ：初期実装と基礎的調査",
+            "paragraphs_below": []
+        },
+        {
+            "number": "4.1方",
+            "part_name": "法",
+            "paragraphs_below": [
+                {
+                    "content": "本章では，漫才カラオケの実現可能性を検証し，漫才実演を支援するためにどのような要素をどのように提示すべきかを調査するための探索的なユーザスタディについて述べる．我々は，漫才カラオケの第1 プロトタイプとして台詞，抑揚，発話タイミングという最小限の要素をツッコミ役とボケ役に分けて提示するインタフェース（図2）を実装した．台詞が右から左へ流れ，2 人のユーザは台詞が左側のバーにかかったタイミングで，提示された抑揚をもとに",
+                    "list_items": [],
+                    "is_enumrated": false
+                },
+                {
+                    "content": "台詞を発することで，発話タイミングを合わせて漫才を演じることができる．抑揚の提示は，各文字の縦位置によって5 段階の音程で表現した．我々は，漫才の台詞とその演じ方を提示するインタフェースを「譜面」と呼び，実装では既存の漫才実演からこの譜面を作成する必要がある．今回のユーザスタディでは，漫才経験のある著者の一人が，プロの漫才師の実演映像[*7]（ミルクボーイ作「コーンフレーク」[28]）から台詞，抑揚，発話タイミングを抽出して譜面を作成した．",
+                    "list_items": [],
+                    "is_enumrated": false
+                },
+                {
+                    "content": "尚，譜面作成を容易にするため，台詞，抑揚，発話タイミングを編集可能なGUI エディタも実装した．参考として，第1 プロトタイプにおける譜面作成エディタ画面を図3 に示す．エディタでは，まず台詞入力欄に台詞を入力し，次に出力位置の指定により台詞の表示位置を設定する．その後，台詞出力ボタンを押すことで，赤ボタンでツッコミ役の台詞として上側領域に，緑ボタンでボケ役の台詞として下側領域に出力される．台詞が出力された後は，マウス操作により各文字の縦横位置を調整することで，文字の配置によって抑揚や発話タイミングを表現できる．",
+                    "list_items": [],
+                    "is_enumrated": false
+                },
+                {
+                    "content": "参加者がプロトタイプを用いて漫才を演じ，また鑑賞するというユーザスタディを実施した．漫才未経験者の7 名（男性6 名，女性1 名；平均年齢23.1 歳, 標準偏差1.21）が参加し，このうち男性6 名がユーザスタディで漫才を一度演じた．実演後，参加者にシステムの利点と課題について議論してもらった．本論文で報告するユーザスタディは，所属機関の倫理審査の承認を得て実施した．",
+                    "list_items": [],
+                    "is_enumrated": false
+                }
+            ]
+        },
+        {
+            "number": "4.2結",
+            "part_name": "果と考察",
+            "paragraphs_below": [
+                {
+                    "content": "ユーザスタディの結果，漫才を演じた6 名中5 名が，そ",
+                    "list_items": [],
+                    "is_enumrated": false
+                },
+                {
+                    "content": "の体験が楽しかったと回答した．漫才を鑑賞する聴衆の視点からは，7 名中6 名が実演された漫才は面白かったと述べた．またパフォーマンス中に聴衆が笑う様子も観察され，ユーザが聴衆にとって面白い漫才を実演できたことが示唆された．これらの結果から，漫才カラオケの実現可能性，すなわち，ユーザの漫才実演をリアルタイムに支援し，聴衆がそれを見て楽しむというコンセプトの妥当性が示されたと考える．",
+                    "list_items": [],
+                    "is_enumrated": false
+                },
+                {
+                    "content": "一方で参加者らの議論から，現状のインタフェースの課題として，(1) 提示される台詞の内容を理解することの難しさ，(2) 韻律情報の不十分さ，(3) 動作情報の不足という3 つが明らかになった．",
+                    "list_items": [],
+                    "is_enumrated": false
+                },
+                {
+                    "content": "1 つ目に関して，参加者はインタフェース上で流れてくる台詞の内容を理解することが難しいことを指摘した．台詞の内容を理解しやすくするためには，台詞の中の印象付けたい言葉やツッコミ／ボケどころを，文字フォントの違いによって強調して提示できるよう改善する方法が考えれられる．台詞の重要な部分を見分けやすくすることで，内容の理解を促進できる可能性がある．",
+                    "list_items": [],
+                    "is_enumrated": false
+                },
+                {
+                    "content": "2 つ目について，参加者は抑揚の提示は理解できるものの，それに完全に従うことは困難であったと指摘し，また台詞に関連した感情表現も提示してほしいと述べた．そこで，フォントやエフェクトを用いた感情提示を追加する改善方法を考えた．これにより，ユーザが提示された抑揚に完全に従うことができない場合でも，感情表現に伴う韻律表現は促せる可能性がある．尚，提示された抑揚通りに演じる難しさの指摘があった一方，その提示が不要との指摘はなかったため，抑揚の提示そのものは行うべきだと考える．",
+                    "list_items": [],
+                    "is_enumrated": false
+                },
+                {
+                    "content": "3 つ目については，どのような動作を行えば良いかといった，動作情報提示の追加が求められた．動作情報の提示として，2 つの方法が考えられる．1 つ目は台詞と関連付いた主要な動作を要所のみで提示する方法で，2 つ目は既存の演者の動作すべてを動画として継続的に提示する方法である．前者はわかりやすいと考えられるものの情報が限定的になる．一方，後者は情報を多く提示できるが，ユーザの認知負荷を増大させる可能性がある．そこで，次のプロトタイプでは双方を実装し，それぞれに対する評価を比較して適切な方法を調べることとした．",
+                    "list_items": [],
+                    "is_enumrated": false
+                },
+                {
+                    "content": "以上より，第1 プロトタイプの実装とユーザスタディを通じて，漫才カラオケというコンセプトの実現可能性を実証し，インタフェースデザインにおける3 つの改善方針が明らかになった．次に，これらの方針に従って第2 プロトタイプを実装し，改良されたインタフェースが漫才カラオケの要件を満たすかを検証するためユーザスタディを実施する．",
+                    "list_items": [],
+                    "is_enumrated": false
+                }
+            ]
+        },
+        {
+            "number": "5.",
+            "part_name": "第2 プロトタイプ：インタフェースの改良と評価",
+            "paragraphs_below": []
+        },
+        {
+            "number": "5.1実",
+            "part_name": "装",
+            "paragraphs_below": [
+                {
+                    "content": "前章で特定された改善方針に基づき，漫才カラオケの第2 プロトタイプを実装した（図1(a)）．ユーザスタディを通じて，この改良されたインタフェースが前章で挙げられた課題を解決し，要件を満たすかを検証し，またさらなる改善点を明らかにすることを目指した．第2 プロトタイプでは改善方針（4.2 節）に従って，台詞の内容理解の促進と感情表現を提示するための，特徴的な文字フォントと視覚エフェクトの追加（図4），および2 つの異なる動作提示手法を追加した．",
+                    "list_items": [],
+                    "is_enumrated": false
+                },
+                {
+                    "content": "台詞の内容理解を促進するため，文字フォントによって，ネタ中の印象付けたい言葉や，ツッコミ／ボケどころを目立たせるようにした．またユーザが表出すべき感情表現を提示するため，喜怒哀楽に対応した4 つの感情（喜び，怒り，悲しみ，楽しさ）に注目し，それらを文字フォントと視覚エフェクトを用いて提示できるようにした．",
+                    "list_items": [],
+                    "is_enumrated": false
+                },
+                {
+                    "content": "動作情報の提示のために，2 つのアプローチを実装した．1 つ目は，動作カードでネタ中の主要な動作を提示する方法である．動作カードは台詞と共に流れ，ユーザは動作カードがタイミングバーに到達したときに指定された動作を実行する（図5）．2 つ目は，動作アバタ動画で既存の漫",
+                    "list_items": [],
+                    "is_enumrated": false
+                },
+                {
+                    "content": "*[8]https://fonts.google.com/noto/specimen/Noto+Sans+JP*[9]https://pm85122.onamae.jp/851ch-dz.html",
+                    "list_items": [],
+                    "is_enumrated": false
+                },
+                {
+                    "content": "*[11]https://fonts.google.com/specimen/BIZ+UDGothic*[12]https://booth.pm/ja/items/6006490",
+                    "list_items": [
+                        "",
+                        "*[11]https://fonts.google.com/specimen/BIZ+UDGothic",
+                        "",
+                        "*[12]https://booth.pm/ja/items/6006490"
+                    ],
+                    "is_enumrated": true
+                },
+                {
+                    "content": "才師の動作を提示する方法である．この動画は，著者が既存の動作を模倣したものをモーションキャプチャして棒人間型のアバタに反映することで作成した．動画は図1(a)のようにインタフェースの背景で再生され，ユーザは動作アバタの動きを模倣することで動作を実行する．",
+                    "list_items": [],
+                    "is_enumrated": false
+                },
+                {
+                    "content": "第1 プロトタイプと同様に，下記3 つの既存の漫才実演映像から台詞，抑揚，感情，動作，タイミング情報を抽出して譜面を作成した．印象付けたい言葉やツッコミ／ボケどころでのフォントの変更，感情表現，主要な動作は，漫才経験のある著者の判断で抽出した．また，フォント変更，エフェクトの追加，動作カードの追加を行えるように，譜面作成エディタも改良した．参考として第2 プロトタイプでの譜面作成エディタ画面を図6 に示す．今回用いた漫才のネタは，主に言葉の掛け合いで笑いを生む“しゃべくり漫才” と言えるものとした．",
+                    "list_items": [],
+                    "is_enumrated": false
+                },
+                {
+                    "content": "( 1 ) ミルクボーイ作「コーンフレーク」[28]：関西弁の言葉の掛け合いが特徴．( 2 ) ナイツ作「ドラゴンボール」[29]：関東弁の言葉遊びが特徴．( 3 ) オードリー作「怖い話」[30]：他2 つと比較して大きな動作が特徴．",
+                    "list_items": [
+                        "",
+                        "( 1 ) ミルクボーイ作「コーンフレーク」[28]：関西弁の言葉の掛け合いが特徴．",
+                        "",
+                        "( 2 ) ナイツ作「ドラゴンボール」[29]：関東弁の言葉遊びが特徴．",
+                        "",
+                        "( 3 ) オードリー作「怖い話」[30]：他2 つと比較して大きな動作が特徴．"
+                    ],
+                    "is_enumrated": true
+                }
+            ]
+        },
+        {
+            "number": "5.2評",
+            "part_name": "価方法",
+            "paragraphs_below": [
+                {
+                    "content": "実装した第2 プロトタイプを用いてユーザスタディを実施した．漫才未経験者10 名（男性9 名，女性1 名，平均年齢M = 23.7 歳, SD = 1.19）が2 人ずつ5 組に分かれて参加した．各組は3 つのネタすべてをランダムな順で実演し，参加者は各ネタ実演後にユーザ用質問紙に回答した（合計30 回答）．すべてのネタを演じた後，各組は次の組の漫才実演を鑑賞し，各ネタ鑑賞後に聴衆用質問紙に回答した（1 組目から4 組目までの合計24 回答）．尚，1 組目の実演は著者2 人が鑑賞し，著者は聴衆用質問紙には回答しなかった．",
+                    "list_items": [],
+                    "is_enumrated": false
+                },
+                {
+                    "content": "漫才カラオケの要件は，「ユーザが負担なく漫才を楽しめること」と「聴衆がその漫才を面白いと感じること」であった．第2 プロトタイプがその要件をどの程度満たし",
+                    "list_items": [],
+                    "is_enumrated": false
+                },
+                {
+                    "content": "たかを評価するため，ユーザ用質問紙として漫才実演体験（Q1-3：漫才を演じる楽しさ，聴衆を笑わせる楽しさ，パフォーマンスの質）とインタフェースを評価（Q4-17：6 つのインタフェース要素の印象）するものと，聴衆用質問紙として漫才鑑賞体験（Q18-19：面白さ，上手さ）を評価するものを用意した（表1）．各項目は7 段階リッカート尺度（1：全くそう思わない，7：非常にそう思う）とした．加えて，実演後および鑑賞後にフィードバックを得るため参加者にインタビューも実施した．尚，ネタ1と2ではボケ役への感情提示と動作カードが含まれていなかったため，それらに関する質問項目への回答（感情提示：Q8,9；動作カード：Q10,11,16,17）は除外した（実際の回答数は表1参照）．統計分析として，各項目ごとにチャンスレベル4に対するウィルコクソン符号順位検定（有意水準5%）[31]を，Rver4.4.1[32],[33]を用いて行った．",
+                    "list_items": [],
+                    "is_enumrated": false
+                }
+            ]
+        },
+        { "number": "5.3結", "part_name": "果と考察", "paragraphs_below": [] },
+        {
+            "number": "5.3.1ユ",
+            "part_name": "ーザ用質問紙",
+            "paragraphs_below": [
+                {
+                    "content": "表1は各項目の統計解析結果であり，漫才実演体験に関するQ1-3はチャンスレベルより高く評価され，その差は有意だった．インタビューでは，10名中4名のユーザが聴衆の笑いを引き出せたことに満足感を述べた．ある参加者は「聴衆を笑わせることが気持ちよかった．自分が作成したネタではなかったが，自分が面白い人間であるかのような錯覚を覚えた」と述べ，また別の参加者は「感情や動作を加えて反応が得られたとき，嬉しくなり，もっと提示に従おうと努力したくなった」とコメントした．これらの結果から，第2プロトタイプによりユーザは楽しんで漫才を演じられたことが示されたと考える．",
+                    "list_items": [],
+                    "is_enumrated": false
+                },
+                {
+                    "content": "インタフェース評価に関して，まず第1プロトタイプからの改善点について議論する（台詞の内容理解促進，感情表現提示，動作情報提示）．台詞の内容理解促進について，Q4とQ5の結果から，提示の見やすさと内容の理解しやすさの両方でチャンスレベルよりも高く評価され，その差は有意だった．また10名中3名の参加者が，フォントの強調が内容理解に役立ったと言及した．よってフォントを強調する提示方法により，台詞内容の理解しやすさを改善できたと考える．",
+                    "list_items": [],
+                    "is_enumrated": false
+                },
+                {
+                    "content": "感情表現提示について，Q8とQ9から，提示自体は理解しやすかったものの，参加者が提示に従って演じることができたかという点についてはチャンスレベルとの有意差はなかった．また10名中5名の参加者は感情表現提示に肯定的な反応を示した．このことから，感情表現提示の実演における有効性が示唆された一方で，ユーザがより感情を表現しやすくするための改善が重要だと考える．",
+                    "list_items": [],
+                    "is_enumrated": false
+                },
+                {
+                    "content": "動作情報提示に関して，動作カード方式のわかりやすさ（Q10）はチャンスレベルよりも高く有意差が確認されたが，提示通りに動作を実演できたか（Q11）についての",
+                    "list_items": [],
+                    "is_enumrated": false
+                },
+                {
+                    "content": "有意差はなかった．動作アバタ方式では，わかりやすさ（Q12）に有意差はなかったものの，提示通りに演じられたか（Q13）はチャンスレベルよりも低く評価され，その差が有意であった．また10 名中5 名の参加者が動作カード方式に肯定的な意見を示した一方，10 名中8 名が動作アバタは不要と感じたと述べた．これらの結果から，動作提示に関しては動作カードが漫才実演を支援するうえでより効果的な可能性が示されたものの，ユーザの身体動作を促せるように改良することも重要と考える．",
+                    "list_items": [],
+                    "is_enumrated": false
+                },
+                {
+                    "content": "その他のインタフェース要素について，発話と動作カードのタイミング提示（Q14-17）は，わかりやすさと提示通り演じられたかの両方で高く評価され，チャンスレベルとの差が有意だった．しかし抑揚の提示（Q6-7）に関しては，提示自体は理解しやすかったものの，参加者が提示に従って演じることができたかについてはチャンスレベルとの有意差はなかった．これは，ユーザがより抑揚を表現しやすくするよう改善が重要であることを示唆している．",
+                    "list_items": [],
+                    "is_enumrated": false
+                },
+                {
+                    "content": "全体として，第2 プロトタイプにおける情報提示方法は概ね肯定的な評価を受けたと考える．インタビューでも漫才実演の負担に関する否定的な意見は確認されておらず，第2 プロトタイプは「ユーザが負担なく漫才を演じることができる」という要件を一定程度満たしたと考える．加えて，10 名中8 名の参加者が漫才実演に必要な情報として不足しているものを指摘しなかったことから，漫才実演支援において現状の提示情報が十分であることが示唆された．ただし2 名の参加者は，表情や視線方向に関する情報提示が有用な追加要素になる可能性を指摘した．さらに質問紙の結果から，抑揚と感情を提示通りに演じられるよう改善することが重要だと考えており，そのような提示手法の開発も今後の検討課題である．5.3.2聴衆用質問紙",
+                    "list_items": [],
+                    "is_enumrated": false
+                },
+                {
+                    "content": "鑑賞体験に関して，Q18 とQ19 はいずれもチャンスレベルよりも高く評価されており，その差は有意であった．よって第2 プロトタイプは「聴衆が漫才カラオケを用いた漫才実演を面白いと感じる」という要件を満たしたと考える．参加者からは，「観ているうちに自然と笑ってしまった」や「ある程度の質で漫才実演ができるのはすごい」といった肯定的なコメントも得られた．",
+                    "list_items": [],
+                    "is_enumrated": false
+                }
+            ]
+        },
+        {
+            "number": "6.",
+            "part_name": "結論",
+            "paragraphs_below": [
+                {
+                    "content": "本研究では，ユーザが既存の漫才を演じ，聴衆の笑いを引き出すことを可能にする，漫才実演支援システム「漫才カラオケ」を提案した．本稿では，その要件を「ユーザが負担なく楽しんで漫才を演じられること」と「聴衆がその漫才を面白いと感じられること」とし，これらを満たすインタフェースの実現を目指した．2 段階のプロトタイピングとユーザスタディを通じて，第1 段階ではリアルタイムの視覚情報提示による漫才実演支援というコンセプトの実",
+                    "list_items": [],
+                    "is_enumrated": false
+                },
+                {
+                    "content": "表1質問紙の結果．評価値は1 から7 の範囲で，高いほど肯定的な評価を示す．太字のp 値は，チャンスレベル4 との統計的有意差を示す．",
+                    "list_items": [
+                        "表1質問紙の結果．評価値は1 から7 の範囲で，高いほど肯定的な評価を示す．太字のp 値は，チャンスレベル4 との統計的有意差を示す．"
+                    ],
+                    "is_enumrated": true
+                },
+                {
+                    "content": "現可能性を示し，ネタの台詞提示に加え，抑揚，感情，動作，タイミングといった情報の提示が必要であることを明らかにした．次に，第2 段階でこれらの要素を統合したインタフェースを開発して評価した結果，本システムが上記の要件を一定程度満たすことを示した．",
+                    "list_items": [],
+                    "is_enumrated": false
+                },
+                {
+                    "content": "本研究の貢献は，これまでにないリアルタイムに漫才実演を支援するという目的において，視覚的な情報提示による実演支援の有効性を実証し，そのためのインタフェースの設計指針を提示した点にある．本システムは，漫才を「鑑賞する」だけでなく「演じる」という新たなエンタテインメント体験を提供するものであり，この体験はレクリエーションのための応用に加えて，コミュニケーション能力の向上を目的とした教育的応用にも繋がる可能性がある．ただし，プロの漫才師など第三者が創作したネタをシステムに用いる際には，著作者の権利を侵害しない範囲[*8]で使用するか，適切な権利処理を行う必要があると考える．",
+                    "list_items": [],
+                    "is_enumrated": false
+                },
+                {
+                    "content": "本稿の制限事項として，ユーザスタディの参加者数が少なかったことが挙げられ，結果の一般化可能性を高めるには，より多くの参加者による検証が重要である．また実験で用いたネタは，いわゆるしゃべくり漫才と言える3 種類のみであった．今後は掛け合いのテンポが速いネタや身体動作がより大きなネタなど，多様なネタで検証することで，現状のインタフェースデザインの限界と新たなデザイン",
+                    "list_items": [],
+                    "is_enumrated": false
+                },
+                {
+                    "content": "*[8]本論文の実験は，学術目的に限定して研究室内で非公開で行った．",
+                    "list_items": [],
+                    "is_enumrated": false
+                },
+                {
+                    "content": "方法を明らかにしたい．また今回のユーザスタディでは，ユーザの実演が元のネタをどの程度のレベルで再現できていたかの観点は評価せず，少なくとも聴衆にとって面白いと感じられる実演が可能であるかに焦点を当てた．よってこの観点については今後の調査が必要である．さらに本研究では，レクリエーションや教育，漫才の練習といった具体的な応用目的を特定せずに，漫才実演支援の実現可能性にまず焦点を当てた．今後の研究では，これらの特定の状況において求められる提示手法や機能を検討し，漫才カラオケの有効性を評価したい．",
+                    "list_items": [],
+                    "is_enumrated": false
+                },
+                {
+                    "content": "インタフェース設計の今後の課題としては，漫才実演中の表情や視線方向を提示する機能の追加や，ユーザがより直感的に抑揚と感情表現を伴って演じることを可能にする提示手法の実現が挙げられる．また，譜面作成の負担を軽減するための，漫才の実演映像からボケとツッコミを分離して台詞を自動文字起こしするような譜面作成支援機能の開発や，ユーザの発話と提示された抑揚やタイミングの一致度をリアルタイムに比較し，最後に点数などでフィードバックする採点機能の実現も重要だと考える．さらに，提示するネタの自動生成機能の開発にも取り組みたい．例えばユーザの趣味やエピソードを入力し，それに基づくネタを生成することで，自身についてユーモアを交えて聴衆に伝える体験が可能になると考える．",
+                    "list_items": [],
+                    "is_enumrated": false
+                },
+                {
+                    "content": "本研究の発展として，コンシューマゲーム化や現在のカ",
+                    "list_items": [],
+                    "is_enumrated": false
+                },
+                {
+                    "content": "ラオケへのコンテンツ導入といった展開が考えられる．プロが創作したネタをシステムで利用する際には，著作権等に関する適切な手続きが必須であるが，これが確立されれば，楽曲のカラオケ配信と同様に，ネタの権利を持つ漫才師や作家へ収益が還元される仕組みが生まれる可能性もある．ただし，こういった応用を進める際には，文化的な側面での考察が不可欠である．歌曲においては，他者の作品をカバーしたりカラオケで歌ったりすることは一般的だが，漫才において同様の文化は現状ほとんど見られない．漫才師や作家が，自身が創作したネタを他者が演じることをどう受け止めるかは現時点では未知数である．ネタの創作には多大な時間と労力が注がれているはずであり，既存のネタを用いた応用を進める際には，創作者の考えを無視してはならないと考える．本研究が，漫才文化の新たな楽しみ方を提案し，その魅力をより高める一助となることを期待する．",
+                    "list_items": [],
+                    "is_enumrated": false
+                }
+            ]
+        },
+        {
+            "number": "",
+            "part_name": "参考文献",
+            "paragraphs_below": [
+                {
+                    "content": "[1]北原保雄（編）：明鏡国語辞典第二版，大修館書店(2010).[2]Tsutsumi, H.: Conversation analysis of boke-tsukkomiexchange in Japanese comedy, New Voices, Vol. 5, pp.147–173 (2011).[3]Roberts, A.: The Double Act: A History of BritishComedy Duos, History Press (2018).[4]針谷壮一：中国の漫才“相声” におけるボケとツッコミ，國學院雑誌，Vol. 121, No. 7, pp. 1–16 (2020).[5]荒井英治郎：「教育漫才」と向き合う，教職研究，Vol. 13,pp. 93–108 (2022).[6]関口美緒，スペインドリュー：<報告>中上級日本語学習者における創作活動: 漫才の指導を通して，筑波大学グローバルコミュニケーション教育センター日本語教育論集，Vol. 35, pp. 45–53 (2020).[7]Liston, E.: Meera Syal: ‘Making people laugh is ad-dictive’, The Guardian (2009). (2025/6/12 閲覧).[8]野沢直子：笑うお葬式，文藝春秋(2017).[9]おぼん・こぼん：東京漫才，飛鳥新社(2022).[10]Youngs, I.:The comedians making mental healtha laughing matter, British Broadcasting Corporation(2019). (2025/6/12 閲覧).[11]Martin, R.: The Psychology of Humor: An IntegrativeApproach, Academic Press (2007).[12]Komatsu, S., Kubota, T., Sato, S. and Ogawa, K.:Manzai Karaoke: A Real-time Visual Guidance Sys-tem for Assisting Japanese Double Act Performance,The 24th International Federation for InformationProcessing – International Conference on Entertain-ment Computing (2025). (to appear).[13]Maeshiro, T.: Static and non-linguistic quantitativeindicators to evaluate Japanese comic dialogues ofManzai, Humor, Vol. 31, No. 1, pp. 39–64 (2018).[14]Sakata, M.: Quantification of multimodal interactionsas open communication in Manzai Duo-Comic Acts,2017 International Conference on Culture and Com-puting, pp. 65–66 (2017).[15]Zhang, H., Shoda, H., Aoyagi, S. and Yamamoto, M.:A Study on the Back and Forth Manzai of Milkboy byFocusing on Embodied Motions and Actions for Liven-Up, HCI International 2022 – Late Breaking Papers:",
+                    "list_items": [
+                        "",
+                        "[1]北原保雄（編）：明鏡国語辞典第二版，大修館書店(2010).",
+                        "[2]Tsutsumi, H.: Conversation analysis of boke-tsukkomiexchange in Japanese comedy, New Voices, Vol. 5, pp.147–173 (2011).",
+                        "",
+                        "[3]Roberts, A.: The Double Act: A History of BritishComedy Duos, History Press (2018).",
+                        "",
+                        "[4]針谷壮一：中国の漫才“相声” におけるボケとツッコミ，國學院雑誌，Vol. 121, No. 7, pp. 1–16 (2020).",
+                        "",
+                        "[5]荒井英治郎：「教育漫才」と向き合う，教職研究，Vol. 13,pp. 93–108 (2022).",
+                        "",
+                        "[6]関口美緒，スペインドリュー：<報告>中上級日本語学習者における創作活動: 漫才の指導を通して，筑波大学グローバルコミュニケーション教育センター日本語教育論集，Vol. 35, pp. 45–53 (2020).",
+                        "",
+                        "[7]Liston, E.: Meera Syal: ‘Making people laugh is ad-dictive’, The Guardian (2009). (2025/6/12 閲覧).",
+                        "[8]野沢直子：笑うお葬式，文藝春秋(2017).",
+                        "[9]おぼん・こぼん：東京漫才，飛鳥新社(2022).",
+                        "[10]Youngs, I.:The comedians making mental healtha laughing matter, British Broadcasting Corporation",
+                        "(2019). (2025/6/12 閲覧).",
+                        "",
+                        "[11]Martin, R.: The Psychology of Humor: An IntegrativeApproach, Academic Press (2007).",
+                        "",
+                        "[12]Komatsu, S., Kubota, T., Sato, S. and Ogawa, K.:Manzai Karaoke: A Real-time Visual Guidance Sys-tem for Assisting Japanese Double Act Performance,The 24th International Federation for InformationProcessing – International Conference on Entertain-ment Computing (2025). (to appear).",
+                        "",
+                        "[13]Maeshiro, T.: Static and non-linguistic quantitativeindicators to evaluate Japanese comic dialogues ofManzai, Humor, Vol. 31, No. 1, pp. 39–64 (2018).",
+                        "[14]Sakata, M.: Quantification of multimodal interactionsas open communication in Manzai Duo-Comic Acts,2017 International Conference on Culture and Com-puting, pp. 65–66 (2017).",
+                        "",
+                        "[15]Zhang, H., Shoda, H., Aoyagi, S. and Yamamoto, M.:A Study on the Back and Forth Manzai of Milkboy byFocusing on Embodied Motions and Actions for Liven-Up, HCI International 2022 – Late Breaking Papers:"
+                    ],
+                    "is_enumrated": true
+                },
+                {
+                    "content": "HCI for Today’s Community and Economy, pp. 89–103 (2022).",
+                    "list_items": [],
+                    "is_enumrated": false
+                },
+                {
+                    "content": "[16]Aoki, S., Umetani, T., Kitamura, T. and Nadamoto,A.:Generating Manzai-Scenario Using Entity Mis-take, Advances in Network-Based Information Sys-tems, pp. 1007–1017 (2018).[17]Mashimo,R.,Umetani,T.,Kitamura,T.andNadamoto, A.: Generating Funny Dialogue betweenRobots based on Japanese Traditional Comedy Enter-tainment, Proceeding of the 2014 Conference on Inter-active Entertainment, p. 1–7 (2014).[18]Shimozaki, A., Yamamoto, J. and Nadamoto, A.: Au-tomatic Generation of Funny-Dialog Based on Cui-sine Recipes, Advances in Networked-based Informa-tion Systems, pp. 216–226 (2023).[19]Miyamoto, D., Ishida, A., Kanai, N., Fukaya, R.,Washikawa, S., Tanaka, S., Yang, H., Tanikawa, T.,Hirose, M. and Amemiya, T.: Training comic dialog inVR to improve presentation skills, HCI International2023 – Late Breaking Papers, pp. 191–202 (2023).[20]グレープカンパニーチャンネル：【公式】サンドウィッチマン漫才【ピザカラネタ○1】2016年，https://www.youtube.com/watch?v=nCoAmfVoMxo(2017). (2025/6/12 閲覧).[21]ナムコ：つっこみ養成ギプスナイス★ツッコミ，https://www.metro-japan.com/game/log/owarai_hp/(2002). (2025/6/12 閲覧).[22]Lee, E., Yang, E., Huh, J. and Oh, U.: EcoScript:A Real-Time Presentation Supporting Tool using aSpeech Recognition Model, 2024 IEEE InternationalConference on Information Reuse and Integration forData Science, pp. 96–101 (2024).[23]樺山雄太，横窪安奈，ロペズギヨーム：教示アニメーションを用いたプレゼンテーション実演支援システム，マルチメディア, 分散協調とモバイルシンポジウム2019 論文集，Vol. 2019, pp. 1697–1699 (2019).[24]Okada, T., Yamamoto, T., Terada, T. and Tsukamoto,M.:Wearable MC system a system for supportingMC performances using wearable computing technolo-gies, Proceeding of the 2nd Augmented Human Inter-national Conference, pp. 1–7 (2011).[25]Gandy, M., MacIntyre, B., Presti, P., Dow, S., Bolter,J., Yarbrough, B. and O’Rear, N.: AR Karaoke: Act-ing in Your Favorite Scenes, Proceedings of the 4thIEEE/ACM International Symposium on Mixed andAugmented Reality, p. 114–117 (2005).[26]Donahue, C., Lipton, Z. C. and McAuley, J.: DanceDance Convolution, Proceedings of the 34th Interna-tional Conference on Machine Learning, Vol. 70, pp.1039–1048 (2017).[27]Tsujino, Y. and Yamanishi, R.: Dance Dance Gra-dation: A Generation of Fine-Tuned Dance Charts,Entertainment Computing – ICEC 2018, pp. 175–187(2018).[28]ミルクボーイ：コーンフレーク，M-1 グランプリ2019（2019 年12 月22 日放送）(2019).[29]ナイツ：ドラゴンボール，爆笑レッドカーペット（2008年12 月17 日放送）(2008).[30]オードリー：怖い話，爆笑レッドカーペット（2008 年6月4 日放送）(2008).[31]Harris, T. and Hardin, J. W.: Exact Wilcoxon Signed-Rank and Wilcoxon Mann–Whitney Ranksum Tests,The Stata Journal, Vol. 13, No. 2, pp. 337–343 (2013).[32]R Core Team: R: A Language and Environment forStatistical Computing, R Foundation for StatisticalComputing (2024).[33]Hothorn, T. and Hornik, K.: exactRankTests: ExactDistributions for Rank and Permutation Tests (2022).",
+                    "list_items": [
+                        "",
+                        "[16]Aoki, S., Umetani, T., Kitamura, T. and Nadamoto,A.:Generating Manzai-Scenario Using Entity Mis-take, Advances in Network-Based Information Sys-tems, pp. 1007–1017 (2018).",
+                        "[17]Mashimo,R.,Umetani,T.,Kitamura,T.andNadamoto, A.: Generating Funny Dialogue betweenRobots based on Japanese Traditional Comedy Enter-tainment, Proceeding of the 2014 Conference on Inter-active Entertainment, p. 1–7 (2014).",
+                        "",
+                        "[18]Shimozaki, A., Yamamoto, J. and Nadamoto, A.: Au-tomatic Generation of Funny-Dialog Based on Cui-sine Recipes, Advances in Networked-based Informa-tion Systems, pp. 216–226 (2023).",
+                        "",
+                        "[19]Miyamoto, D., Ishida, A., Kanai, N., Fukaya, R.,Washikawa, S., Tanaka, S., Yang, H., Tanikawa, T.,Hirose, M. and Amemiya, T.: Training comic dialog inVR to improve presentation skills, HCI International2023 – Late Breaking Papers, pp. 191–202 (2023).",
+                        "",
+                        "[20]グレープカンパニーチャンネル：【公式】サンドウィッチマン漫才【ピザカラネタ○1】2016年，https://www.youtube.com/watch?v=nCoAmfVoMxo",
+                        "(2017). (2025/6/12 閲覧).",
+                        "",
+                        "[21]ナムコ：つっこみ養成ギプスナイス★ツッコミ，https://www.metro-japan.com/game/log/owarai_hp/",
+                        "(2002). (2025/6/12 閲覧).",
+                        "",
+                        "[22]Lee, E., Yang, E., Huh, J. and Oh, U.: EcoScript:A Real-Time Presentation Supporting Tool using aSpeech Recognition Model, 2024 IEEE InternationalConference on Information Reuse and Integration forData Science, pp. 96–101 (2024).",
+                        "",
+                        "[23]樺山雄太，横窪安奈，ロペズギヨーム：教示アニメーションを用いたプレゼンテーション実演支援システム，マルチメディア, 分散協調とモバイルシンポジウム2019 論文集，Vol. 2019, pp. 1697–1699 (2019).",
+                        "",
+                        "[24]Okada, T., Yamamoto, T., Terada, T. and Tsukamoto,M.:Wearable MC system a system for supportingMC performances using wearable computing technolo-gies, Proceeding of the 2nd Augmented Human Inter-national Conference, pp. 1–7 (2011).",
+                        "",
+                        "[25]Gandy, M., MacIntyre, B., Presti, P., Dow, S., Bolter,J., Yarbrough, B. and O’Rear, N.: AR Karaoke: Act-ing in Your Favorite Scenes, Proceedings of the 4thIEEE/ACM International Symposium on Mixed andAugmented Reality, p. 114–117 (2005).",
+                        "",
+                        "[26]Donahue, C., Lipton, Z. C. and McAuley, J.: DanceDance Convolution, Proceedings of the 34th Interna-tional Conference on Machine Learning, Vol. 70, pp.1039–1048 (2017).",
+                        "",
+                        "[27]Tsujino, Y. and Yamanishi, R.: Dance Dance Gra-dation: A Generation of Fine-Tuned Dance Charts,Entertainment Computing – ICEC 2018, pp. 175–187",
+                        "(2018).",
+                        "",
+                        "[28]ミルクボーイ：コーンフレーク，M-1 グランプリ2019",
+                        "（2019 年12 月22 日放送）(2019).",
+                        "",
+                        "[29]ナイツ：ドラゴンボール，爆笑レッドカーペット（2008年12 月17 日放送）(2008).",
+                        "",
+                        "[30]オードリー：怖い話，爆笑レッドカーペット（2008 年6月4 日放送）(2008).",
+                        "",
+                        "[31]Harris, T. and Hardin, J. W.: Exact Wilcoxon Signed-Rank and Wilcoxon Mann–Whitney Ranksum Tests,The Stata Journal, Vol. 13, No. 2, pp. 337–343 (2013).",
+                        "",
+                        "[32]R Core Team: R: A Language and Environment forStatistical Computing, R Foundation for Statistical",
+                        "Computing (2024).",
+                        "",
+                        "[33]Hothorn, T. and Hornik, K.: exactRankTests: ExactDistributions for Rank and Permutation Tests (2022)."
+                    ],
+                    "is_enumrated": true
+                }
+            ]
+        }
+    ],
+    "figures": [
+        {
+            "stringize_content": "(a)(b)動作カード感情提示漫才カラオケ上：ツッコミ譜面タイミングバー動作提示アバタ(ここで発話・動作)ボケ役ツッコミ役ボケ役抑揚提示ツッコミ役聴衆下：ボケ譜面台詞や動作カードが右から左に流れる",
+            "number": 1,
+            "title": "漫才カラオケの概要：(a) 第5 章で実装したインタフェースの例．ツッコミ役とボケ役の両方に対して，台詞とその演じ方が提示される．(b) 漫才カラオケの使用例．2 人のユーザが聴衆の前に立ち，漫才を演じて聴衆を楽しませることができる．",
+            "etitle": null
+        },
+        {
+            "stringize_content": "上：ツッコミ譜面タイミングバー(ここで発話)下：ボケ譜面抑揚提示台詞や動作カードが右から左に流れる",
+            "number": 2,
+            "title": "第1 プロトタイプのインタフェース．台詞，抑揚，発話タイミングを提示する．灰色の背景に記載されている文章は説明用に追加した．",
+            "etitle": null
+        },
+        {
+            "stringize_content": "マウス操作で台詞入力欄文字の縦横位置を変更出力位置を指定台詞出力ボタン",
+            "number": 3,
+            "title": "第1 プロトタイプの譜面作成エディタ．",
+            "etitle": null
+        },
+        {
+            "stringize_content": "フォントエフェクトJapanese ExtraBoldNoto Sans[8]ー台詞の内容851チカラヅヨク[9]ー理解促進源暎ぽっぷる[10]ー源暎ぽっぷるハートマーク[12]851チカラヅヨク怒りマーク[12]感情提示BIZUDPGothic Bold[11]がっかりマーク[12]源暎ぽっぷる音符マーク[12]",
+            "number": 4,
+            "title": "台詞の内容の理解促進のための，印象付ける言葉やツッコミ／ボケどころを文字フォントで強調する例と，感情提示のための文字フォントとエフェクトによる喜怒哀楽の例．",
+            "etitle": null
+        },
+        {
+            "stringize_content": "胸を叩く手を挙げる両手を広げる仰け反る",
+            "number": 5,
+            "title": "動作カードの例．左の2 枚はツッコミ役の動作，右の2 枚はボケ役の動作を提示する．",
+            "etitle": null
+        },
+        {
+            "stringize_content": "マウス操作で動作カード追加文字の縦横位置を変更マウス操作で感情エフェクトフォント変更追加ボタン台詞入力欄台詞出力ボタン出力位置を指定図6第2 プロトタイプの譜面作成エディタ．",
+            "number": 6,
+            "title": "第2 プロトタイプの譜面作成エディタ．",
+            "etitle": null
+        }
+    ],
+    "tables": [],
+    "footnotes": [
+        { "sign": "", "content": "∗共同筆頭著者" },
+        {
+            "sign": "",
+            "content": "1名古屋大学大学院工学研究科a)komatsu.shunta.i0@s.mail.nagoya-u.ac.jp"
+        },
+        { "sign": "", "content": "*[1]https://www.m-1gp.com/" },
+        {
+            "sign": "",
+            "content": "*[2]https://funfare.bandainamcoent.co.jp/4756/"
+        },
+        {
+            "sign": "",
+            "content": "*[3]https://newsdig.tbs.co.jp/articles/-/1256318?display=1"
+        },
+        { "sign": "", "content": "*[4]https://nsc.yoshimoto.co.jp/" },
+        { "sign": "", "content": "*[5]https://www.we-school.net/wcs/" },
+        {
+            "sign": "",
+            "content": "*[6]https://www.shochikugeino.co.jp/school/"
+        },
+        {
+            "sign": "",
+            "content": "*[7]本論文で使用した映像は著者らによるテレビ番組の録画を使用した．"
+        },
+        {
+            "sign": "",
+            "content": "*[10]https://okoneya.jp/font/download.html#dl-gpop"
+        }
+    ]
+}

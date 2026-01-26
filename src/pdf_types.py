@@ -1,7 +1,9 @@
 
 from dataclasses import dataclass
+import dataclasses
+import json
+from pathlib import Path
 from typing import Optional
-from metadata_types import SimplifiedMetadata
 from util import clean_multiline_literal
 
 
@@ -47,6 +49,9 @@ class Paper:
     figures:list[Figure]
     tables:list[Table]
     footnotes:list[Footnote]
+
+    def decode_json(self, out:Path):
+        out.write_text(json.dumps(dataclasses.asdict(self), ensure_ascii=False))
 
     def __str__(self):
         return clean_multiline_literal(f"""
