@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import re
 from returns.primitives.exceptions import UnwrapFailedError
-from returns.result import safe, Success, Failure
+from returns.result import safe
 
-from pdf_types import Figure, Footnote, Paper, Paragraph, Reference, Section, Table
+from pdf_types import Figure, Paper, Reference
 
 from .stream import ExceptionReport, TokenStream, exception_report
 from .tokens import Token, TokenType
@@ -45,24 +45,19 @@ def split_footnotes(lines: list[str]) -> list[str]:
 
 @safe(exceptions=(ExceptionReport, UnwrapFailedError))
 def parse_list_item(paper: Paper, tokens: TokenStream) -> None:
-    assert len(paper.sections) > 0, "セクションがまだ一つも追加されていません。セクションを追加してください。"
-
-    paragraphs = paper.sections[-1].paragraphs_below
     # 一度もまだ段落が構成されていないか、前の段落が段落ではなかった場合には新しく箇条書きの段落を作る
-    if len(paragraphs) == 0 or not paragraphs[-1].is_enumrated:
-        paragraphs.append(Paragraph("", [], True))
+    if not paper.exists_listitems() or not paper.is_last_text_listitem():
+        paper.add_listitems()
 
-    last_paragraph = paragraphs[-1]
     while not tokens.empty() and tokens.next().unwrap().type == TokenType.LIST_ITEM:
         list_item_raw = tokens.expect("リスト", tokentypes={TokenType.LIST_ITEM}).unwrap()
-        last_paragraph.content += list_item_raw.content + "\n"
         for item in split_list_items(list_item_raw.lines):
-            last_paragraph.list_items.append(item)
+            paper.extend_last_listitems(item)
 
 
 @safe(exceptions=(ExceptionReport,))
 def extract_fig_caption_from_stringize_content(figure: Figure, tokens: TokenStream):
-    match = re.search(r"図[0-9]{1,2}(.*)$", figure.stringize_content)
+    match = re.search(r"図[0-9]{1,2}([^\n]*)", figure.stringize_content)
     if match == None:
         raise exception_report(tokens, "画像のトークンの中に図のキャプションが入っていません")
     (start, end) = match.span()
@@ -78,7 +73,7 @@ def extract_tab_caption_from_stringize_content(table: str, tokens: TokenStream):
 
 @safe(exceptions=(ExceptionReport,))
 def split_caption_number_title(caption: str, tokens: TokenStream):
-    matched = re.match(r"(図|表)(?P<number>[0-9]+)\s*(?P<title>.+)$", caption.strip())
+    matched = re.search(r"(図|表)(?P<number>[0-9]+)\s*(?P<title>.+)$", caption.strip())
     if matched == None:
         raise exception_report(tokens, f"図・表のキャプションが指定された形式に則っていません。: {caption}")
     number = matched["number"]
@@ -91,22 +86,21 @@ def split_caption_number_title(caption: str, tokens: TokenStream):
 def parse_figure(paper: Paper, tokens: TokenStream) -> None:
     figure = Figure("", -1, "unknown", None)
     while not tokens.empty() and tokens.next().unwrap().type == TokenType.PICTURE:
-        figure.stringize_content += tokens.pop("図の内容").unwrap().content
+        figure.stringize_content += "\n".join(tokens.pop("図の内容").unwrap().lines) + "\n"
 
     if tokens.empty():
         caption = extract_fig_caption_from_stringize_content(figure, tokens).unwrap()
     else:
         caption_token = tokens.next().unwrap()
         correct_type = caption_token.type in {TokenType.CAPTION, TokenType.LIST_ITEM, TokenType.TEXT, TokenType.SECTION_HEADER}
-        is_caption_title = caption_token.content.startswith("図")
+        is_caption_title = any(line.startswith("図") for line in caption_token.lines)
         if correct_type and is_caption_title:
             token = tokens.pop("キャプション").unwrap()
             caption = token.content
         else:
             caption = extract_fig_caption_from_stringize_content(figure, tokens).unwrap()
-            print(caption)
     (figure.number, figure.title) = split_caption_number_title(caption, tokens).unwrap()
-    paper.figures.append(figure)
+    paper.add_figure(figure.stringize_content, str(figure.number), figure.title)
 
 
 @safe(exceptions=(ExceptionReport, UnwrapFailedError))
@@ -114,14 +108,14 @@ def parse_table(paper: Paper, tokens: TokenStream, with_caption:bool) -> None:
     number:int = -1
     title:str = ""
     if with_caption:    
-        caption = tokens.expect("表キャプション", {TokenType.TEXT, TokenType.LIST_ITEM, TokenType.CAPTION}).unwrap().content
+        caption = tokens.expect("表キャプション", {TokenType.TEXT, TokenType.LIST_ITEM, TokenType.CAPTION, TokenType.SECTION_HEADER}).unwrap().content
         (number, title) = split_caption_number_title(caption, tokens).unwrap()
         table = tokens.expect("表", {TokenType.TABLE}).unwrap()
     else:
         table = tokens.expect("表", {TokenType.TABLE}).unwrap()
         caption= extract_tab_caption_from_stringize_content(table.content, tokens).unwrap()
         (number, title) = split_caption_number_title(caption, tokens).unwrap()
-    paper.tables.append(Table(table.cells, table.content, number, title, ""))
+    paper.add_table(table.content, str(number), title)
 
 
 
@@ -138,65 +132,49 @@ def parse_footnote(paper: Paper, tokens: TokenStream) -> None:
             sign = matching["sign"]
             content = matching["content"]
             assert isinstance(sign, str) and isinstance(content, str)
-            paper.footnotes.append(Footnote(sign, content))
+            paper.add_footnote(content, sign)
         else:
-            paper.footnotes.append(Footnote("", item))
+            paper.add_footnote(item, "")
 
 
-def parse_header_line(string: str) -> Section:
+def parse_header_line(string: str) -> tuple[str, str]:
     header_pattern = r"(?P<number>([0-9]{1,2}\.)*[0-9]{1,2}\.?)\s*(?P<title>.+)$"
     header_match = re.match(header_pattern, string)
     if header_match is None:
-        return Section("", string, [])
+        return ("", string)
 
     number = header_match["number"]
     part_name = header_match["title"]
     assert isinstance(number, str) and isinstance(part_name, str)
-    return Section(number, part_name, [])
-
+    return (number, part_name)
 
 @safe(exceptions=(ExceptionReport, UnwrapFailedError))
 def parse_section_header(paper: Paper, tokens: TokenStream) -> None:
     header = tokens.pop("節タイトル").unwrap().content
     assert isinstance(header, str)
-    paper.sections.append(parse_header_line(header))
+    (number, part_name) = parse_header_line(header)
+    paper.add_section_title(part_name, number)
 
 
 def is_new_paragraph(paragraph: Token) -> bool:
     return len(paragraph.line_x0) == 1 or len(set(paragraph.line_x0)) > 1
 
 
-@safe(exceptions=(ExceptionReport,))
-def last_non_list_paragraph(section: Section, tokens: TokenStream) -> Paragraph:
-    idx = len(section.paragraphs_below) - 1
-    while section.paragraphs_below[idx].is_enumrated:
-        idx -= 1
-        if idx < 0:
-            raise exception_report(tokens, "箇条書きでないパラグラフがこれより前に見つかりませんでした。")
-    return section.paragraphs_below[idx]
 
 
 @safe(exceptions=(ExceptionReport, UnwrapFailedError))
 def parse_main_text(paper: Paper, tokens: TokenStream) -> None:
-    assert len(paper.sections) > 0, "セクションがまだ一つも追加されていません。セクションを追加してください。"
-    last_section = paper.sections[-1]
     popped = tokens.pop("本文").unwrap()
-    if len(last_section.paragraphs_below) == 0:
-        last_paragraph = Paragraph("", [], False)
-        last_section.paragraphs_below.append(last_paragraph)
-    else:
-        last_paragraph = last_non_list_paragraph(last_section, tokens).unwrap()
-        terminated= last_paragraph.content.strip().endswith(("．", "。", ". ", "."))
-        if is_new_paragraph(popped) and terminated:
-            last_paragraph = Paragraph("", [], False)
-            last_section.paragraphs_below.append(last_paragraph)
+    if is_new_paragraph(popped) and (not paper.exists_interrupted_paragraph()) or paper.is_last_text_listitem():
+        paper.add_paragraph("")
     for idx, line in enumerate(popped.lines):
         # 誤って別のセクションのタイトルが入り込んでしまっている時
-        if re.match(r"[0-9]{1,2}((\.[0-9]{1,2})+|\.)", line) is not None and popped.line_starts_with_bold[idx]:
-            last_section = parse_header_line(line)
-            paper.sections.append(last_section)
+        is_actually_section_title = re.match(r"[0-9]{1,2}((\.[0-9]{1,2})+|\.)", line) != None and popped.line_starts_with_bold[idx]
+        if is_actually_section_title:
+            (number, title) = parse_header_line(line)
+            paper.add_section_title(title, number)
         else:
-            last_paragraph.content += line
+            paper.extend_last_paragraph(line)
 
 
 @safe(exceptions=(ExceptionReport, UnwrapFailedError))
@@ -208,22 +186,23 @@ def parse_abstract(paper: Paper, tokens: TokenStream):
 
 @safe(exceptions=(ExceptionReport, UnwrapFailedError))
 def parse_keywords(paper: Paper, tokens: TokenStream):
-    keywords_result = tokens.expect_pattern("キーワード", patterns=r"キーワード\s*(:|：)\s*(.+)$")
-    match keywords_result:
-        case Success(keywords):
-            keywords = keywords[2]
-            assert isinstance(keywords, str)
-            keywords = re.split(r"，", keywords)
-            for keyword in keywords:
-                assert isinstance(keyword, str)
-            paper.keywords = keywords
-        case Failure(err):
-            paper.keywords = []
+    keywords_result = tokens.next().unwrap()
+    keywords= re.match(r"キーワード\s*(:|：)\s*(.+)$", keywords_result.content)
+    if keywords != None:
+        keywords = keywords[2]
+        assert isinstance(keywords, str)
+        keywords = re.split(r"，", keywords)
+        for keyword in keywords:
+            assert isinstance(keyword, str)
+        paper.keywords = keywords
+    else:
+        paper.keywords = []
 
 @safe(exceptions=(ExceptionReport, UnwrapFailedError))
 def parse_paper_head(paper: Paper, tokens: TokenStream) -> None:
-    title = tokens.expect("タイトル", tokentypes={TokenType.TITLE}).unwrap()
-    paper.title = title.content
+    while not tokens.empty() and tokens.next().unwrap().type == TokenType.TITLE:
+        title = tokens.pop("タイトル").unwrap()
+        paper.title += title.content
     tokens.expect("著者群").unwrap()
     parse_abstract(paper, tokens).unwrap()
     parse_keywords(paper, tokens).unwrap()
@@ -253,7 +232,7 @@ def parse_references(paper: Paper, tokens: TokenStream) -> None:
 def is_actually_table_caption(tokens: TokenStream) -> bool:
     token1 = tokens.next().unwrap()
     token2 = tokens.next(1).unwrap()
-    return re.match(r"表[0-9]{1,2}(.*)", token1.content) != None and token1.line_starts_with_bold[0] and token2.type == TokenType.TABLE
+    return re.match(r"表[0-9]{1,2}(.*)", token1.content) != None and token2.type == TokenType.TABLE
 
 
 def is_actually_footnote(token: Token) -> bool:
@@ -269,7 +248,6 @@ def is_actually_table(token: Token) -> bool:
 @safe(exceptions=(ExceptionReport, UnwrapFailedError))
 def parse_table_from_picture_fallback(paper:Paper, tokens:TokenStream) -> None:
     token = tokens.pop("表（図に対するフォールバック）").unwrap()
-    token_content = "\n".join(token.lines)
     matches= re.match(r"表(?P<number>[0-9０-９]{1,2})(?P<title>.*)", token.lines[0])
     if matches == None: 
         raise exception_report(tokens, "図に対する表のパース処理中に、表タイトルが見つかりませんでした。")
@@ -278,7 +256,7 @@ def parse_table_from_picture_fallback(paper:Paper, tokens:TokenStream) -> None:
     assert isinstance(number, str) and isinstance(title, str)
     cells:list[list[str | None]] = [[line] for line in token.lines]
     content = "|".join("".join(map(lambda cell: cell if cell != None else "", row)) for row in cells)
-    paper.tables.append(Table(cells, content, int(number), title, None))
+    paper.add_table(content, number, title)
 
 
 
@@ -286,6 +264,7 @@ def parse_table_from_picture_fallback(paper:Paper, tokens:TokenStream) -> None:
 def parse_paper(paper: Paper, tokens: TokenStream) -> None:
     tokens.expect("ページヘッダ", tokentypes={TokenType.PAGE_HEADER}).unwrap()
     parse_paper_head(paper, tokens).unwrap()
+
     while not tokens.empty():
         next_token = tokens.next().unwrap()
         match next_token.type:
@@ -296,7 +275,9 @@ def parse_paper(paper: Paper, tokens: TokenStream) -> None:
                 tokens.expect("ページフッタ", {TokenType.PAGE_FOOTER}).unwrap()
                 continue
             case TokenType.SECTION_HEADER:
-                if next_token.content != "参考文献":
+                if is_actually_table_caption(tokens):
+                    parse_table(paper, tokens, True).unwrap()
+                elif next_token.content != "参考文献":
                     parse_section_header(paper, tokens).unwrap()
                 else:
                     parse_references(paper, tokens).unwrap()
@@ -331,6 +312,10 @@ def parse_paper(paper: Paper, tokens: TokenStream) -> None:
                     parse_list_item(paper, tokens).unwrap()
             case TokenType.CAPTION:
                 parse_table(paper, tokens, True).unwrap()
+            case TokenType.FORMULA:
+                parse_main_text(paper, tokens).unwrap()
             case _:
                 assert 0, next_token.type
+        
+        paper.end_of_the_paper()
     return

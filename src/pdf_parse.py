@@ -18,7 +18,7 @@ from parse import (  # noqa: F401
     parse_paper,
     str_to_token_type,
 )
-from pdf_types import Paper
+from pdf_types import Paper, StructuredPaper
 from returns.result import Failure
 
 __all__ = [
@@ -44,7 +44,7 @@ def main() -> None:
 
     logging.basicConfig(level=logging.INFO)
 
-    paper = Paper("", "", [], [], [], [], [], [], [])
+    paper = Paper()
     token_stream = TokenStream(args.pdf_path)
     result = parse_paper(paper, token_stream).unwrap()
     if isinstance(result, Failure):

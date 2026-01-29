@@ -17,6 +17,7 @@ class TokenType(Enum):
     CAPTION = "caption"
     TITLE = "title"
     SECTION_HEADER = "section-header"
+    FORMULA = "formula"
     PAGE_HEADER = "page-header"
 
 
@@ -42,6 +43,8 @@ def str_to_token_type(value: str) -> TokenType:
             return TokenType.SECTION_HEADER
         case "page-header":
             return TokenType.PAGE_HEADER
+        case "formula":
+            return TokenType.FORMULA
         case _:
             raise ValueError(f"Unknown token type: {value}")
 
