@@ -5,7 +5,7 @@ import pymupdf.layout as _
 import pymupdf4llm
 import argparse
 
-from pymupdf_layout_types import PdfDocument, list_span_texts
+from parse.pymupdf_layout_types import PdfDocument, list_span_texts
 
 @safe
 def pdf2txt(
@@ -47,5 +47,4 @@ if __name__ == "__main__":
     args= parser.parse_args()
     pdf_document = pdf2json(args.filename).unwrap()
     list_span_texts(pdf_document)
-
     

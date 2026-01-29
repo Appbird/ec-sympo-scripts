@@ -4,6 +4,7 @@ import dataclasses
 import json
 from pathlib import Path
 from typing import Optional
+from parse.stream import ExceptionReport
 from util import clean_multiline_literal
 
 
@@ -16,6 +17,7 @@ class Figure:
 
 @dataclass
 class Table:
+    cells:list[list[str|None]]
     content:str
     number:int
     title:str
@@ -55,6 +57,7 @@ class Paper:
     tables:list[Table]
     footnotes:list[Footnote]
     references:list[Reference]
+    warnings:list[ExceptionReport]
 
     def decode_json(self, out:Path):
         out.write_text(json.dumps(dataclasses.asdict(self), ensure_ascii=False, indent=4))

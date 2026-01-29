@@ -25,6 +25,10 @@ class TextLine(BaseModel):
     bbox: Bbox
     spans: list[Span]
 
+class Table(BaseModel):
+    extract:list[list[str|None]]
+    markdown:str
+
 class Box(BaseModel):
     x0: float
     y0: float
@@ -32,7 +36,7 @@ class Box(BaseModel):
     y1: float
     boxclass: str
     image: Optional[Any]
-    table: Optional[Any]
+    table: Optional[Table]
     textlines: Optional[list[TextLine]]
 
 class FullTextLine(BaseModel):
