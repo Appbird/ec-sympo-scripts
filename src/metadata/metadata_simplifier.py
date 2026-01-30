@@ -1,15 +1,17 @@
 from __future__ import annotations
 
 from datetime import date
+import json
+from pathlib import Path
 from typing import Any, TypeGuard
 
 from returns.maybe import Maybe, Nothing, Some
 from returns.result import Failure, Result, Success
 
-from json_tools import first_failure as _first_failure
-from json_tools import first_present as _first_present
-from json_tools import required as _required
-from metadata_types import AffiliationEntry, Author, Bibliographic, PATHS, SimplifiedMetadata
+from .json_tools import first_failure as _first_failure
+from .json_tools import first_present as _first_present
+from .json_tools import required as _required
+from .metadata_types import AffiliationEntry, Author, Bibliographic, PATHS, SimplifiedMetadata
 
 def _is_affiliation_entry(entry: Any) -> TypeGuard[AffiliationEntry]:
     """Check if an entry has a valid affiliation shape."""
@@ -21,7 +23,7 @@ def _biblio_path(suffix: str) -> str:
     return f"_item_metadata.item_18_biblio_info_10.attribute_value_mlt[0].{suffix}"
 
 
-def _bibliographic(metadata: dict[str, Any]) -> Result[Bibliographic, str]:
+def _bibliographic(metadata: dict[str, Any], warnings:list[str]) -> Result[Bibliographic, str]:
     """Extract required bibliographic fields."""
     title = _required(
         data=metadata,
@@ -76,7 +78,7 @@ def _parse_date(value: str) -> Result[date, str]:
         return Failure(f"invalid date: {value}")
 
 
-def _author_names_from_item_metadata(metadata: dict[str, Any]) -> Maybe[list[str]]:
+def _author_names_from_item_metadata(metadata: dict[str, Any], warnings:list[str]) -> Maybe[list[str]]:
     """Extract author names from item metadata entries."""
     value = _first_present(metadata, PATHS.authors_item_metadata)
     match value:
@@ -96,7 +98,7 @@ def _author_names_from_item_metadata(metadata: dict[str, Any]) -> Maybe[list[str
             return Nothing
 
 
-def _author_names_from_creator(metadata: dict[str, Any]) -> Maybe[list[str]]:
+def _author_names_from_creator(metadata: dict[str, Any], warnings:list[str]) -> Maybe[list[str]]:
     """Extract author names from creator name lists."""
     value = _first_present(metadata, PATHS.authors_creator)
     match value:
@@ -110,18 +112,18 @@ def _author_names_from_creator(metadata: dict[str, Any]) -> Maybe[list[str]]:
             return Nothing
 
 
-def _author_names(metadata: dict[str, Any]) -> Result[list[str], str]:
+def _author_names(metadata: dict[str, Any], warnings:list[str]) -> Result[list[str], str]:
     """Resolve author names from supported metadata shapes."""
     for extractor in (_author_names_from_item_metadata, _author_names_from_creator):
-        result = extractor(metadata)
+        result = extractor(metadata, warnings)
         if isinstance(result, Some):
             return Success(result.unwrap())
     return Failure("missing authors")
 
 
-def _authors(metadata: dict[str, Any]) -> Result[list[Author], str]:
+def _authors(metadata: dict[str, Any], warnings:list[str]) -> Result[list[Author], str]:
     """Extract authors and align optional affiliations by index."""
-    names_result = _author_names(metadata)
+    names_result = _author_names(metadata, warnings)
     if isinstance(names_result, Failure):
         return names_result
     names = names_result.unwrap()
@@ -138,7 +140,11 @@ def _authors(metadata: dict[str, Any]) -> Result[list[Author], str]:
         if _is_affiliation_entry(entry)
     ]
     if len(affiliations) < len(names):
-        return Failure("invalid affiliations")
+        authors: list[Author] = []
+        for index, name in enumerate(names):
+            authors.append({"name": name, "affiliation": affiliations[index] if index < len(affiliations) else "Missing"})
+        warnings.append("メタデータの著者の数と所属の数があっていませんでした。所属をMissingと記録します。")
+        return Success(authors)    
 
     authors: list[Author] = []
     for index, name in enumerate(names):
@@ -146,7 +152,7 @@ def _authors(metadata: dict[str, Any]) -> Result[list[Author], str]:
     return Success(authors)
 
 
-def simplify_metadata(payload: dict[str, Any]) -> Result[SimplifiedMetadata, str]:
+def simplify_metadata(payload: dict[str, Any], warnings:list[str]) -> Result[SimplifiedMetadata, str]:
     """Simplify a metadata payload into a normalized structure."""
     metadata = payload.get("metadata")
     if not isinstance(metadata, dict):
@@ -163,7 +169,7 @@ def simplify_metadata(payload: dict[str, Any]) -> Result[SimplifiedMetadata, str
         candidate_paths=PATHS.publication_date,
         field_name="publication date",
     )
-    authors_result = _authors(metadata)
+    authors_result = _authors(metadata, warnings)
     language_result = _required(
         data=metadata,
         candidate_paths=PATHS.language,
@@ -196,7 +202,7 @@ def simplify_metadata(payload: dict[str, Any]) -> Result[SimplifiedMetadata, str
     )
     if isinstance(failure, Failure): return failure
 
-    bibliographic_result = _bibliographic(metadata)
+    bibliographic_result = _bibliographic(metadata, warnings)
     if isinstance(bibliographic_result, Failure):
         return bibliographic_result
     bibliographic = bibliographic_result.unwrap()
@@ -220,3 +226,12 @@ def simplify_metadata(payload: dict[str, Any]) -> Result[SimplifiedMetadata, str
             },
         }
     )
+
+def simplify_metadata_of_paper(paper_pdf: Path):
+    recid = paper_pdf.parent.name
+    json_path = paper_pdf.parent/f"{recid}_metadata.json"
+    txt = json_path.read_text(encoding="utf-8")
+    metadata_json = json.loads(txt)
+    warnings:list[str] = []
+    result = simplify_metadata(metadata_json, warnings)
+    return result, warnings

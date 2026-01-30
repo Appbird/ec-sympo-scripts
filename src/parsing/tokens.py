@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Iterable
 
-from parse.pymupdf_layout_types import PdfDocument, Span
+from .pymupdf_layout_types import PdfDocument, Span
 
 
 class TokenType(Enum):
@@ -60,6 +60,11 @@ class Token:
 
     def __str__(self) -> str:  # pragma: no cover - debugging aid
         return f"{self.type}, {' / '.join(self.lines)}"
+    def to_dict(self):
+        return {
+            "type": str(self.type),
+            "content": "\n".join(self.lines),
+        }
 
 
 def is_span_bold(span: Span) -> bool:
@@ -106,12 +111,13 @@ def doc_to_tokens(doc: PdfDocument) -> list[Token]:
     return tokens
 
 
-def dump_tokens(tokens: Iterable[Token]) -> str:
+def dump_tokens(tokens: Iterable[Token], at:int = -1) -> str:
     dumped = ""
     head_of_box = True
     for token in tokens:
         if head_of_box:
-            dumped += f"[box {token.type}]\n"
+            dumped += f"[box {token.type} { ">>here!<<" if at == 0 else "" }]\n"
             for line in token.lines:
                 dumped += f"\t{line}\n"
+        at -= 1
     return dumped

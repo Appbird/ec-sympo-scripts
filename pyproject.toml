@@ -9,4 +9,5 @@ dependencies = [
     "pymupdf-layout>=1.26.6",
     "pymupdf4llm>=0.2.9",
     "returns>=0.26.0",
+    "tqdm>=4.67.1",
 ]

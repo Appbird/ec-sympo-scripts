@@ -9,7 +9,8 @@ import re
 from returns.maybe import Maybe, Nothing, Some
 from returns.result import Failure, ResultE, Success
 
-from pdf2text import pdf2json
+from .pymupdf_layout_types import PdfDocument
+from .pdf2text import pdf2json
 from util import clean_multiline_literal
 
 from .tokens import Token, TokenType, doc_to_tokens, dump_tokens
@@ -25,8 +26,7 @@ class TokenStream:
     tokens: list[Token]
     at: int = 0
 
-    def __init__(self, filename: Path):
-        doc = pdf2json(filename).unwrap()
+    def __init__(self, filename: Path, doc:PdfDocument):
         tokens = doc_to_tokens(doc)
         self.filename = filename
         self.tokens = list(tokens)
@@ -35,7 +35,7 @@ class TokenStream:
         return dump_tokens(self.tokens)
 
     def surroundings(self, radius: int) -> tuple[list[Token], int]:
-        return (self.tokens[self.at - radius : self.at + radius], radius - max(radius - self.at, 0))
+        return (self.tokens[self.at - 1 - radius : self.at + radius], radius - max(radius - self.at, 0))
 
     def location(self) -> int:
         return self.at
@@ -111,7 +111,7 @@ class TokenStream:
 class ExceptionReport(Exception):
     filename: str
     current_position: int
-    surroundings: list[Token]
+    surroundings: tuple[list[Token], int]
     exception: str
 
     def __str__(self) -> str:  # pragma: no cover - formatting only
@@ -121,16 +121,32 @@ class ExceptionReport(Exception):
         at {self.filename}:{self.current_position + 1}
 
         ========================
-        {dump_tokens(self.surroundings)}
+        {dump_tokens(self.surroundings[0], self.surroundings[1])}
         ========================
         """
         )
+    def decode_dict(self):
+        return {
+            "filename": self.filename,
+            "explanation": self.exception,
+            "current_position": self.current_position,
+            "surroundings": [token.to_dict() for token in self.surroundings[0]]
+        }
+        
 
 
 def exception_report(tokens: TokenStream, err: str) -> ExceptionReport:
     return ExceptionReport(
         str(tokens.filename),
         tokens.location(),
-        tokens.surroundings(2)[0],
+        tokens.surroundings(2),
+        err,
+    )
+def exception_report_prior(title:str, err: str) -> ExceptionReport:
+    li:tuple[list[Token], int] = ([], -1)
+    return ExceptionReport(
+        title,
+        -1,
+        li,
         err,
     )

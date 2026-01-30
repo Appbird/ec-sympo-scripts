@@ -5,7 +5,7 @@ import pymupdf.layout as _
 import pymupdf4llm
 import argparse
 
-from parse.pymupdf_layout_types import PdfDocument, list_span_texts
+from .pymupdf_layout_types import PdfDocument, list_span_texts
 
 @safe
 def pdf2txt(

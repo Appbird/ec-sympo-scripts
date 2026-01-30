@@ -5,7 +5,7 @@ from typing import TypedDict
 
 from returns.maybe import Maybe
 
-from json_tools import PathSpec
+from .json_tools import PathSpec
 
 
 class PublicationDate(TypedDict):
@@ -39,6 +39,27 @@ class SimplifiedMetadata(TypedDict):
     bibliographic: Bibliographic
     language: str
     urls: Urls
+
+def default_simplified_metadata() -> SimplifiedMetadata:
+    return {
+        "title": "",
+        "abstract": "",
+        "publication_date": {
+            "year": -1, "month": -1, "day": -1
+        },
+        "authors": [],
+        "bibliographic": {
+            "title": "",
+            "page_start": "",
+            "page_end": "",
+            "volume_number": ""
+        },
+        "language": "ja",
+        "urls": {
+            "file": "",
+            "self": ""
+        }
+    }
 
 
 class AffiliationEntry(TypedDict):
