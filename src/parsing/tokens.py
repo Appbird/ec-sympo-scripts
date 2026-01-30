@@ -1,3 +1,5 @@
+"""PDFドキュメントからトークン列を生成する。"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass

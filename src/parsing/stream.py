@@ -1,3 +1,5 @@
+"""PDFをトークン列として扱うストリームと例外報告。"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass

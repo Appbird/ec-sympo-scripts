@@ -1,3 +1,5 @@
+"""メタデータJSONを正規化して簡略化する。"""
+
 from __future__ import annotations
 
 from datetime import date

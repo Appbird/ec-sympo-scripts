@@ -1,3 +1,5 @@
+"""PDF/メタデータを処理して出力フォルダに整形保存する。"""
+
 from __future__ import annotations
 
 import json

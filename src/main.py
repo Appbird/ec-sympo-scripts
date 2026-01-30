@@ -1,3 +1,5 @@
+"""CLIのエントリポイント。cli.main() を呼び出すだけの薄いラッパー。"""
+
 from cli import main
 
 

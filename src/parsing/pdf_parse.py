@@ -1,7 +1,4 @@
-"""Backward-compatible imports for the new parse package.
-
-When executed as a script, parse a PDF and emit ./out.json.
-"""
+"""単体実行用のPDFパースCLI。"""
 
 from __future__ import annotations
 

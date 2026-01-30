@@ -1,3 +1,5 @@
+"""メタデータの型定義とパス定義を提供する。"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass

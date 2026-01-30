@@ -1,3 +1,5 @@
+"""overview.csv 向けの集計とCSV出力を担当する。"""
+
 from __future__ import annotations
 
 import csv

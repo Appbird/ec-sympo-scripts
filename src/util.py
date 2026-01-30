@@ -1,3 +1,5 @@
+"""共通ユーティリティ関数を提供する。"""
+
 from returns.result import safe
 
 def clean_multiline_literal(literal:str):

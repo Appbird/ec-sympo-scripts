@@ -1,3 +1,5 @@
+"""TokenStreamから論文構造（Paper）を構築する。"""
+
 from __future__ import annotations
 
 import re

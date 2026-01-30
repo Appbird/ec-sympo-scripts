@@ -1,3 +1,5 @@
+"""PDFレイアウト情報を行単位テキストに変換する。"""
+
 import json
 from pathlib import Path
 from returns.result import safe

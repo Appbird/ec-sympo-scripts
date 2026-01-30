@@ -1,3 +1,5 @@
+"""メタデータJSONの抽出・検証用ユーティリティ。"""
+
 from __future__ import annotations
 
 from typing import Any, Iterable, Sequence

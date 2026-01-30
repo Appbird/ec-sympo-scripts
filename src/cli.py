@@ -1,3 +1,5 @@
+"""CLI引数の解析と全体フローの実行を担当する。"""
+
 from __future__ import annotations
 
 import argparse

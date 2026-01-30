@@ -1,3 +1,5 @@
+"""論文構造データの型定義（Paper/Segment等）。"""
+
 from dataclasses import dataclass
 import dataclasses
 import json

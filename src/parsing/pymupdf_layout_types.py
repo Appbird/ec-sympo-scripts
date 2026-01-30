@@ -1,3 +1,5 @@
+"""PyMuPDF由来のレイアウト型と変換ユーティリティ。"""
+
 from typing import Any, Optional
 from pydantic import BaseModel
 
