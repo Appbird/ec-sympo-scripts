@@ -1,5 +1,5 @@
 [project]
-name = "ec-sympo-scripts"
+name = "ec-scripts"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
@@ -11,3 +11,10 @@ dependencies = [
     "returns>=0.26.0",
     "tqdm>=4.67.1",
 ]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project.scripts]
+ec_scripts = "ec_scripts.cli:main"

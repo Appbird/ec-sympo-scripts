@@ -8,7 +8,12 @@ ECシンポジウムでどのような研究が行われ、どのような評価
 コマンドラインから指定したルート配下のPDFを解析し、出力先に整理された成果物を生成する。
 
 ```sh
-python -m src.main ROOT_PATH [-o OUT_PATH] [-v]
+uv add git https://github.com/Appbird/ec-sympo-scripts.git
+uv run ec_scripts ROOT_PATH [-o OUT_PATH] [-v]
+```
+
+```py
+from ec_scripts import tidy_up_paper_folder, parse_metadata_and_paper, parse_paper_only, simplify_metadata_of_paper
 ```
 
 ROOT_PATH には `data/recid_*` を含むルートディレクトリを指定する。`-o` / `--out_path` は出力先ディレクトリで、既定は `./result`。`-v` / `--verbose` を付けると詳細ログを出力する。

@@ -33,9 +33,9 @@ wheels = [
 ]
 
 [[package]]
-name = "ec-sympo-scripts"
+name = "ec-scripts"
 version = "0.1.0"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "pydantic" },
     { name = "pymupdf-layout" },

@@ -13,7 +13,7 @@ from returns.result import Failure, ResultE, Success
 
 from .pymupdf_layout_types import PdfDocument
 from .pdf2text import pdf2json
-from util import clean_multiline_literal
+from ..util import clean_multiline_literal
 
 from .tokens import Token, TokenType, doc_to_tokens, dump_tokens
 

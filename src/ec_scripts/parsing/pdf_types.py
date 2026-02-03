@@ -7,7 +7,7 @@ import logging
 from pathlib import Path
 from typing import Literal, Optional
 from .stream import ExceptionReport, exception_report
-from util import clean_multiline_literal
+from ..util import clean_multiline_literal
 
 SegmentTypeName = Literal["SectionTitle"] | Literal["Paragraph"] | Literal["ListItems"] | Literal["Figure"] | Literal["Table"] | Literal["FootNote"]
 

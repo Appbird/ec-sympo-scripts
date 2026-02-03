@@ -5,7 +5,7 @@ from __future__ import annotations
 import csv
 from pathlib import Path
 
-from parsing.pdf_types import Paper
+from ..parsing.pdf_types import Paper
 
 
 def summarize_warnings(paper: Paper) -> dict[str, str | int]:
