@@ -19,7 +19,7 @@ from .output.pipeline import parse_paper_only, tidy_up_paper_folder
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Entertainment Computing 論文PDFとメタデータを整理して出力します。"
+        description="Entertainment Computing分野における論文PDFとメタデータをプログラムで読みやすい形式に整理し直します。"
     )
     parser.add_argument("root_path", type=Path, help="data/recid_* を含むルートディレクトリ。PDFだけを渡した場合、その論文の構造を示したJSONだけが出力されます。")
     parser.add_argument("-o", "--out_path", type=Path, help="出力先ディレクトリ。", default="./result")

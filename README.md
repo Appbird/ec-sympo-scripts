@@ -8,8 +8,8 @@ ECシンポジウムでどのような研究が行われ、どのような評価
 コマンドラインから指定したルート配下のPDFを解析し、出力先に整理された成果物を生成する。
 
 ```sh
-uv add git https://github.com/Appbird/ec-sympo-scripts.git
-uv run ec_scripts ROOT_PATH [-o OUT_PATH] [-v]
+uv tool install https://github.com/Appbird/ec-sympo-scripts.git
+ec_scripts ROOT_PATH [-o OUT_PATH] [-v]
 ```
 
 ```py
